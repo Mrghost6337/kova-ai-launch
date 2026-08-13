@@ -3,7 +3,7 @@ import { SectionReveal } from "./KovaBackground";
 
 const principles = [
   { title: "Privacy-first architecture", description: "Designed with privacy and responsible AI usage in mind." },
-  { title: "Secure by design", description: "Security is considered throughout the platform rather than added later." },
+  { title: "Secure by design", description: "Security is considered throughout the app rather than added later." },
   { title: "Your data matters", description: "Clear choices and thoughtful defaults keep you in control of your work." },
 ];
 

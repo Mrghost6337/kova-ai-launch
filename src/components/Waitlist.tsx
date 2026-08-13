@@ -1,22 +1,35 @@
+import { api } from "@/convex/_generated/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Check } from "lucide-react";
+import { useMutation } from "convex/react";
 import { FormEvent, useState } from "react";
 import { SectionReveal } from "./KovaBackground";
 
 export function Waitlist() {
+  const join = useMutation(api.waitlist.join);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
     if (!isValid) {
       setError("Please enter a valid email address.");
       return;
     }
+
     setError("");
-    setSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      await join({ email: email.trim() });
+      setSubmitted(true);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -27,7 +40,7 @@ export function Waitlist() {
           <div className="relative z-10">
             <p className="eyebrow">Early access</p>
             <h2 className="section-title mx-auto mt-5 max-w-2xl">Be first to experience <em>Kova AI.</em></h2>
-            <p className="mx-auto mt-6 max-w-md text-sm leading-7 text-white/45">Kova AI is coming soon. Join the waitlist and be notified when early access opens.</p>
+            <p className="mx-auto mt-6 max-w-md text-sm leading-7 text-white/45">Kova AI is coming to iPhone soon. Join the waitlist and we&apos;ll let you know the moment it&apos;s available.</p>
 
             <AnimatePresence mode="wait">
               {submitted ? (
@@ -40,8 +53,8 @@ export function Waitlist() {
                   <div className="flex flex-col gap-2 rounded-2xl border border-white/[0.15] bg-black/35 p-2 sm:flex-row sm:rounded-full">
                     <label htmlFor="waitlist-email" className="sr-only">Email address</label>
                     <input id="waitlist-email" type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} placeholder="Enter your email" className="h-11 min-w-0 flex-1 bg-transparent px-4 text-sm text-white outline-none placeholder:text-white/30" aria-invalid={Boolean(error)} aria-describedby={error ? "waitlist-error" : undefined} />
-                    <button type="submit" className="group inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-transform hover:scale-[1.02]">
-                      Join Waitlist
+                    <button type="submit" disabled={isSubmitting} className="group inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-transform hover:scale-[1.02] disabled:opacity-60">
+                      {isSubmitting ? "Joining…" : "Join Waitlist"}
                       <ArrowUpRight size={14} strokeWidth={1.7} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </button>
                   </div>

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 const links = [
   { label: "Product", href: "#product" },
@@ -10,13 +11,20 @@ const links = [
   { label: "About", href: "#about" },
 ];
 
-function scrollToSection(href: string, onNavigate?: () => void) {
-  document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-  onNavigate?.();
-}
-
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const goToSection = (href: string) => {
+    if (location.pathname === "/") {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate(`/${href}`);
+    }
+  };
+
+  const goToApp = () => navigate("/app");
 
   return (
     <motion.header
@@ -28,9 +36,9 @@ export function Navbar() {
       <nav className="liquid-glass mx-auto flex max-w-6xl items-center justify-between rounded-full px-4 py-3 sm:px-6">
         <button
           type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          onClick={() => navigate("/")}
           className="font-serif text-[1.45rem] italic tracking-[-0.06em] text-white transition-opacity hover:opacity-70"
-          aria-label="Back to top"
+          aria-label="Back to home"
         >
           Kova AI
         </button>
@@ -40,7 +48,7 @@ export function Navbar() {
             <button
               key={link.href}
               type="button"
-              onClick={() => scrollToSection(link.href)}
+              onClick={() => goToSection(link.href)}
               className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/48 transition-colors hover:text-white"
             >
               {link.label}
@@ -50,10 +58,10 @@ export function Navbar() {
 
         <button
           type="button"
-          onClick={() => scrollToSection("#waitlist")}
+          onClick={goToApp}
           className="hidden rounded-full bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-black transition-transform hover:scale-[1.03] sm:block"
         >
-          Join Waitlist
+          Get the app
         </button>
 
         <button
@@ -80,7 +88,10 @@ export function Navbar() {
               <button
                 key={link.href}
                 type="button"
-                onClick={() => scrollToSection(link.href, () => setIsOpen(false))}
+                onClick={() => {
+                  setIsOpen(false);
+                  goToSection(link.href);
+                }}
                 className="block w-full rounded-2xl px-4 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white"
               >
                 {link.label}
@@ -88,10 +99,13 @@ export function Navbar() {
             ))}
             <button
               type="button"
-              onClick={() => scrollToSection("#waitlist", () => setIsOpen(false))}
+              onClick={() => {
+                setIsOpen(false);
+                goToApp();
+              }}
               className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-black"
             >
-              Join Waitlist
+              Get the app
             </button>
           </motion.div>
         )}

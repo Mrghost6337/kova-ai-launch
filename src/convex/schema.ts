@@ -32,12 +32,25 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // completed Kova AI purchases.
+    purchases: defineTable({
+      userId: v.optional(v.string()), // the user that made the purchase
+      planId: v.string(), // stable plan identifier
+      planName: v.string(), // human-readable plan name
+      amount: v.number(), // amount charged, in the smallest currency unit
+      currency: v.string(), // three-letter currency code
+      status: v.string(), // payment status from Stripe
+      stripeSessionId: v.string(), // Stripe Checkout session id
+      email: v.optional(v.string()), // customer email at purchase time
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_plan", ["userId", "planId"])
+      .index("by_session", ["stripeSessionId"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // early-access waitlist signups.
+    waitlist: defineTable({
+      email: v.string(),
+    }).index("by_email", ["email"]),
   },
   {
     schemaValidation: false,

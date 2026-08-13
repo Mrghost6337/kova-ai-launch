@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Hero() {
+  const navigate = useNavigate();
+
   const scrollTo = (id: string) => {
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -19,7 +22,7 @@ export function Hero() {
           className="mb-8 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.28em] text-white/48 sm:mb-10"
         >
           <span className="size-1 rounded-full bg-white/70" />
-          The next generation of AI
+          Kova AI for iPhone
           <span className="size-1 rounded-full bg-white/30" />
         </motion.div>
 
@@ -40,8 +43,8 @@ export function Hero() {
           transition={{ duration: 0.7, delay: 0.64, ease }}
           className="mt-9 max-w-lg text-sm leading-7 text-white/52 sm:mt-11 sm:text-base"
         >
-          Kova AI brings powerful AI tools into one simple platform — helping
-          you automate repetitive work, move faster and turn ideas into results.
+          Kova AI puts powerful AI tools in one elegant iPhone app — helping you
+          automate repetitive work, move faster and turn ideas into results.
         </motion.p>
 
         <motion.div
@@ -52,10 +55,10 @@ export function Hero() {
         >
           <button
             type="button"
-            onClick={() => scrollTo("#waitlist")}
+            onClick={() => navigate("/app")}
             className="group inline-flex h-12 items-center gap-3 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-[0.12em] text-black transition-transform hover:scale-[1.03]"
           >
-            Join the Waitlist
+            Get Kova AI
             <ArrowUpRight size={15} strokeWidth={1.8} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
           <button
@@ -83,7 +86,7 @@ export function Hero() {
       </div>
 
       <div className="absolute bottom-8 left-6 hidden text-[9px] uppercase tracking-[0.25em] text-white/25 sm:block">
-        01 / 07
+        iPhone · iOS 17+
       </div>
       <div className="absolute bottom-8 right-6 hidden items-center gap-3 text-[9px] uppercase tracking-[0.25em] text-white/25 sm:flex">
         Scroll to explore <span className="h-px w-8 bg-white/20" />

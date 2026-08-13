@@ -10,8 +10,14 @@
 
 import type * as auth from "../auth.js";
 import type * as auth_emailOtp from "../auth/emailOtp.js";
+import type * as checkout from "../checkout.js";
 import type * as http from "../http.js";
+import type * as plans from "../plans.js";
+import type * as purchases from "../purchases.js";
 import type * as users from "../users.js";
+import type * as waitlist from "../waitlist.js";
+import type * as webhooks from "../webhooks.js";
+import type * as webhooksNode from "../webhooksNode.js";
 
 import type {
   ApiFromModules,
@@ -22,8 +28,14 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   "auth/emailOtp": typeof auth_emailOtp;
+  checkout: typeof checkout;
   http: typeof http;
+  plans: typeof plans;
+  purchases: typeof purchases;
   users: typeof users;
+  waitlist: typeof waitlist;
+  webhooks: typeof webhooks;
+  webhooksNode: typeof webhooksNode;
 }>;
 
 /**

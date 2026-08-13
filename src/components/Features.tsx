@@ -4,27 +4,27 @@ const features = [
   {
     index: "01",
     title: "AI Assistance",
-    description: "Create, analyze, write, research and solve problems faster with powerful tools that feel natural.",
+    description: "Write, research and solve problems faster with AI that lives in your pocket.",
   },
   {
     index: "02",
     title: "Automation",
-    description: "Reduce repetitive work by letting AI handle recurring processes and workflows for you.",
+    description: "Let Kova AI handle recurring tasks so you can stop repeating yourself.",
   },
   {
     index: "03",
     title: "Productivity",
-    description: "Bring AI into your everyday workflow so you can spend more time on meaningful work.",
+    description: "Bring AI into your daily workflow and protect time for the work that matters.",
   },
   {
     index: "04",
     title: "Intelligent Workflows",
-    description: "Connect tasks and processes into smarter, AI-powered workflows that keep momentum moving.",
+    description: "Connect tasks into smart AI-powered sequences that keep you moving.",
   },
   {
     index: "05",
-    title: "One Platform",
-    description: "Keep your AI tools and workflows organized in one simple, focused experience.",
+    title: "One App",
+    description: "Keep your AI tools and workflows organized in a single, focused iPhone app.",
   },
 ];
 
@@ -34,10 +34,10 @@ export function Features() {
       <SectionReveal className="mx-auto max-w-6xl">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <div>
-            <p className="eyebrow">The Kova system</p>
+            <p className="eyebrow">Made for iPhone</p>
             <h2 className="section-title mt-5 max-w-2xl">Everything you need to <em>work with AI.</em></h2>
           </div>
-          <p className="max-w-xs text-sm leading-6 text-white/38 md:pb-1">One calm, capable layer between your ideas and the work that follows.</p>
+          <p className="max-w-xs text-sm leading-6 text-white/38 md:pb-1">One calm, capable app between your ideas and the work that follows.</p>
         </div>
 
         <div className="mt-16 border-t border-white/[0.1] sm:mt-24">

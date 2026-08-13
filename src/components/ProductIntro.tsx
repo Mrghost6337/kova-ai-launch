@@ -5,17 +5,17 @@ const pillars = [
   {
     number: "01",
     title: "Automate",
-    description: "Automate repetitive tasks and workflows with AI that works quietly in the background.",
+    description: "Let Kova AI handle repetitive tasks and routines in the background of your day.",
   },
   {
     number: "02",
     title: "Optimize",
-    description: "Use AI to improve the way you work, create and make decisions every day.",
+    description: "Get sharper answers and faster decisions with AI tuned for everyday work.",
   },
   {
     number: "03",
     title: "Elevate",
-    description: "Turn ideas into better outcomes with intelligent assistance built around you.",
+    description: "Turn quick ideas into finished results — right from your iPhone.",
   },
 ];
 
@@ -25,15 +25,16 @@ export function ProductIntro() {
       <SectionReveal className="mx-auto max-w-6xl">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
           <div>
-            <p className="eyebrow">A better way to work</p>
+            <p className="eyebrow">An AI companion for iOS</p>
             <h2 className="section-title mt-5 max-w-md">
-              AI, built around <em>your workflow.</em>
+              AI, built around <em>your day.</em>
             </h2>
           </div>
           <div className="lg:pt-16">
             <p className="max-w-xl text-base leading-8 text-white/48 sm:text-lg">
-              Kova AI helps you use artificial intelligence to simplify work,
-              automate repetitive processes and get more done with less effort.
+              Kova AI brings powerful AI tools into a single iPhone app —
+              simplifying everyday work, automating the repetitive parts and
+              helping you get more done with less effort.
             </p>
           </div>
         </div>

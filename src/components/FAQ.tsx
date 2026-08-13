@@ -4,11 +4,12 @@ import { useState } from "react";
 import { SectionReveal } from "./KovaBackground";
 
 const questions = [
-  ["What is Kova AI?", "Kova AI is an AI-powered platform designed to help people work smarter, automate repetitive processes and get more value from AI."],
-  ["When will Kova AI launch?", "Kova AI is currently preparing for launch. Join the waitlist to receive updates and early-access information."],
-  ["Who is Kova AI for?", "Kova AI is designed for individuals, creators, professionals and teams who want to use AI more effectively."],
-  ["Will there be a free plan?", "Yes. Kova AI is planned to offer a free option alongside paid plans."],
-  ["Is my data secure?", "Kova AI is designed with privacy and security in mind. We will only make specific security claims that are technically implemented and verified."],
+  ["What is Kova AI?", "Kova AI is an iPhone app that puts powerful AI tools in one place — helping you automate repetitive work, move faster and get more from AI."],
+  ["When is Kova AI available?", "Kova AI is preparing for launch on iOS. Join the waitlist to be notified the moment early access opens."],
+  ["Who is Kova AI for?", "Kova AI is designed for individuals, creators, professionals and teams who want to use AI more effectively from their phone."],
+  ["Is there a free plan?", "Yes. Kova AI offers a free plan, and you can upgrade to Pro for advanced features, higher limits and automation."],
+  ["Do I need an account?", "You can explore Kova AI without one, but signing in keeps your purchases and preferences synced."],
+  ["Is my data secure?", "Kova AI is designed with privacy and security in mind. We only make specific security claims that are technically implemented and verified."],
 ];
 
 export function FAQ() {

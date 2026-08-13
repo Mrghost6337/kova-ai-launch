@@ -1,8 +1,8 @@
 import { SectionReveal } from "./KovaBackground";
 
 const steps = [
-  { number: "01", title: "Connect", description: "Bring your workflow into Kova AI." },
-  { number: "02", title: "Automate", description: "Let AI handle repetitive work." },
+  { number: "01", title: "Connect", description: "Bring your workflow into Kova AI on your iPhone." },
+  { number: "02", title: "Automate", description: "Let AI handle the repetitive parts of your work." },
   { number: "03", title: "Elevate", description: "Use the time saved to focus on bigger ideas." },
 ];
 
