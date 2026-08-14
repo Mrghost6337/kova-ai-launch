@@ -3,7 +3,7 @@ import { KovaBackground } from "@/components/KovaBackground";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useCheckout, type BillingInterval } from "@/hooks/use-checkout";
-import { Activity, ArrowLeft, ArrowUpRight, CalendarDays, Check, Dumbbell, Flame, Play, RefreshCw, Settings } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
 import { useState } from "react";
@@ -35,68 +35,22 @@ const coachingLevels: Record<string, string[]> = {
   ],
 };
 
-function PhoneFrame({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function ScreenshotCard({ src, alt, label, className = "" }: { src: string; alt: string; label: string; className?: string }) {
   return (
     <div className={`liquid-glass rounded-[2.5rem] border-white/20 p-2 ${className}`}>
-      <div className="relative aspect-[9/19] overflow-hidden rounded-[2rem] bg-black px-3.5 pb-5 pt-3 text-white sm:px-4">
-        <div className="absolute left-1/2 top-2 z-20 h-5 w-24 -translate-x-1/2 rounded-full bg-[#050505]" />
-        {children}
+      <div className="relative aspect-[9/19] overflow-hidden rounded-[2rem] bg-[#0c0c0e]">
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white/35">
+          <span className="font-serif text-2xl italic text-white/70">KOVA</span>
+          <span className="mt-2 text-[10px] uppercase tracking-[0.18em]">{label} screen</span>
+        </div>
+        <img
+          src={src}
+          alt={alt}
+          className="relative z-10 block h-full w-full object-cover"
+          onError={(event) => { event.currentTarget.style.display = "none"; }}
+        />
       </div>
     </div>
-  );
-}
-
-function PhoneStatus() {
-  return (
-    <div className="flex items-center justify-between px-2 pt-1 text-[9px] font-semibold text-white/90">
-      <span>9:42</span>
-      <div className="flex items-center gap-1.5 text-white/50"><span>••••</span><span className="text-[11px]">◔</span><span className="rounded-[3px] border border-white/60 px-1 py-0.5">▰</span></div>
-    </div>
-  );
-}
-
-function PhoneNav() {
-  return (
-    <div className="absolute inset-x-5 bottom-3 z-10 grid grid-cols-3 rounded-full border border-white/[0.14] bg-[#1a1a1c]/95 p-1 text-center shadow-[0_8px_25px_rgba(0,0,0,0.5)]">
-      <div className="rounded-full bg-white/[0.12] px-1 py-2 text-[8px] text-white"><Dumbbell className="mx-auto mb-1 size-3.5" />Coach</div>
-      <div className="px-1 py-2 text-[8px] text-white/55"><Activity className="mx-auto mb-1 size-3.5" />History</div>
-      <div className="px-1 py-2 text-[8px] text-white/55"><CalendarDays className="mx-auto mb-1 size-3.5" />Plan</div>
-    </div>
-  );
-}
-
-function CoachPreview() {
-  return (
-    <PhoneFrame className="relative z-10 w-full">
-      <PhoneStatus />
-      <div className="mt-12 flex items-center justify-between px-2">
-        <div><p className="text-[8px] text-white/45">Today</p><p className="mt-1 text-xl font-semibold tracking-[-0.06em]">August 13</p></div>
-        <div className="flex items-center gap-2"><span className="flex size-8 items-center justify-center rounded-full bg-white/[0.1]"><Flame className="size-4" /></span><span className="text-sm">3</span><span className="ml-1 flex size-8 items-center justify-center rounded-full bg-white/[0.1]"><Settings className="size-4" /></span></div>
-      </div>
-      <div className="mt-7 rounded-[1.35rem] border border-white/[0.12] bg-[#111113] p-4 shadow-[0_14px_35px_rgba(0,0,0,0.3)]">
-        <p className="text-[8px] font-medium uppercase tracking-[0.25em] text-white/50">Progress day</p>
-        <h3 className="mt-5 max-w-[8rem] text-[2.15rem] font-semibold leading-[0.94] tracking-[-0.08em]">Push<br />performance</h3>
-        <div className="mt-7 grid grid-cols-3 gap-2"><div><p className="text-[8px] uppercase tracking-[0.2em] text-white/40">Time</p><p className="mt-1 text-sm font-semibold">58 min</p></div><div><p className="text-[8px] uppercase tracking-[0.2em] text-white/40">Sets</p><p className="mt-1 text-sm font-semibold">13</p></div><div><p className="text-[8px] uppercase tracking-[0.2em] text-white/40">Focus</p><p className="mt-1 text-sm font-semibold">Push</p></div></div>
-        <button type="button" className="mt-7 flex h-10 w-full items-center justify-center gap-2 rounded-full bg-white text-xs font-semibold text-black"><Play className="size-3 fill-current" /> Start session</button>
-        <div className="mt-5 flex items-center justify-center gap-2 text-[10px] font-medium text-white/70"><RefreshCw className="size-3.5" /> Swap or regenerate</div>
-      </div>
-      <div className="mt-3 rounded-[1.15rem] border border-white/[0.1] bg-[#111113] p-3.5"><div className="flex gap-3"><span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.08]"><Activity className="size-4" /></span><div><p className="text-xs font-semibold">Why this session</p><p className="mt-1 text-[10px] leading-4 text-white/50">Your last pull session was controlled. Push volume is ready to progress.</p></div></div></div>
-      <PhoneNav />
-    </PhoneFrame>
-  );
-}
-
-function HistoryPreview() {
-  return (
-    <PhoneFrame className="mt-12 w-full sm:mt-20">
-      <PhoneStatus />
-      <div className="mt-12 px-2"><div className="flex items-center justify-between"><h3 className="text-2xl font-semibold tracking-[-0.07em]">History</h3><span className="flex size-8 items-center justify-center rounded-full bg-white/[0.1]"><Flame className="size-4" /></span></div><div className="mt-1 flex items-center justify-between"><p className="text-[9px] uppercase tracking-[0.18em] text-white/40">Your recent work</p><span className="text-sm">3</span></div></div>
-      <div className="mt-6 rounded-[1.2rem] border border-white/[0.12] bg-[#111113] p-4"><p className="text-[8px] font-medium uppercase tracking-[0.25em] text-white/45">Consistency</p><p className="mt-5 text-[2.7rem] font-semibold leading-none tracking-[-0.1em]">3 days</p><p className="mt-4 text-[10px] leading-4 text-white/45">Keep your turn going with one focused session each day.</p><div className="mt-5 flex justify-between text-[8px] text-white/45">{["F", "S", "S", "M", "T", "W", "T"].map((day, index) => <div key={`${day}-${index}`} className="text-center"><span>{day}</span><span className={`mx-auto mt-2 block size-2 rounded-full ${index > 0 && index < 6 ? "bg-white" : "bg-white/20"}`} /></div>)}</div></div>
-      <div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-xl border border-white/[0.1] bg-[#111113] p-3"><p className="text-[8px] uppercase tracking-[0.2em] text-white/40">This week</p><p className="mt-2 text-base font-semibold">4 sessions</p></div><div className="rounded-xl border border-white/[0.1] bg-[#111113] p-3"><p className="text-[8px] uppercase tracking-[0.2em] text-white/40">Volume</p><p className="mt-2 text-base font-semibold">36k kg</p></div></div>
-      <p className="mt-7 px-1 text-lg font-semibold tracking-[-0.05em]">Sessions</p>
-      <div className="mt-3 space-y-2"><div className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-[#111113] p-3"><div><p className="text-xs font-medium">Pull performance</p><p className="mt-1 text-[9px] text-white/40">Thursday, Aug 13</p></div><div className="text-right"><p className="text-xs">46 min</p><p className="mt-1 text-[9px] text-white/40">RPE 7</p></div></div><div className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-[#111113] p-3"><div><p className="text-xs font-medium">Legs performance</p><p className="mt-1 text-[9px] text-white/40">Wednesday, Aug 12</p></div><div className="text-right"><p className="text-xs">47 min</p><p className="mt-1 text-[9px] text-white/40">RPE 8</p></div></div></div>
-      <PhoneNav />
-    </PhoneFrame>
   );
 }
 
@@ -123,7 +77,10 @@ export default function ProductDetail() {
                 <p className="mt-5 text-[10px] uppercase tracking-[0.16em] text-white/30">For intermediate lifters · Coming soon to iOS</p>
               </motion.div>
             </div>
-            <div className="grid grid-cols-2 items-start gap-3 sm:gap-5"><motion.div initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}><CoachPreview /></motion.div><motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.22 }}><HistoryPreview /></motion.div></div>
+            <div className="grid grid-cols-2 items-start gap-3 sm:gap-5">
+              <motion.div initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}><ScreenshotCard src="/app/kova-coach.png" alt="KOVA Coach screen" label="Coach" /></motion.div>
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.22 }}><ScreenshotCard src="/app/kova-history.png" alt="KOVA History screen" label="History" className="mt-12 sm:mt-20" /></motion.div>
+            </div>
           </div>
         </section>
 
