@@ -1,49 +1,41 @@
 import { query } from "./_generated/server";
 
+export type BillingInterval = "month" | "year";
+
 export interface Plan {
-  id: string;
+  id: "pro" | "ultra";
   name: string;
   description: string;
-  priceLabel: string;
-  cadence: string;
-  amountCents: number;
+  monthlyPriceLabel: string;
+  annualPriceLabel: string;
+  monthlyAmountCents: number;
+  annualAmountCents: number;
   currency: string;
-  mode: "subscription" | "payment";
   popular?: boolean;
 }
 
-// Single source of truth for what Kova AI sells.
+// Single source of truth for what KOVA sells.
 export const PLANS: Plan[] = [
   {
-    id: "free",
-    name: "Free",
-    description: "Explore the core of Kova AI on your iPhone.",
-    priceLabel: "€0",
-    cadence: "/ month",
-    amountCents: 0,
-    currency: "eur",
-    mode: "payment",
-  },
-  {
     id: "pro",
-    name: "Pro",
-    description: "Advanced AI features, higher limits and automation.",
-    priceLabel: "€19",
-    cadence: "/ month",
-    amountCents: 1900,
-    currency: "eur",
-    mode: "subscription",
+    name: "KOVA PRO",
+    description: "For serious lifters who want an adaptive AI coach.",
+    monthlyPriceLabel: "$9.99",
+    annualPriceLabel: "$79.99",
+    monthlyAmountCents: 999,
+    annualAmountCents: 7999,
+    currency: "usd",
     popular: true,
   },
   {
-    id: "business",
-    name: "Business",
-    description: "Team workflows, collaboration and priority support.",
-    priceLabel: "Custom",
-    cadence: "",
-    amountCents: 0,
-    currency: "eur",
-    mode: "payment",
+    id: "ultra",
+    name: "KOVA ULTRA",
+    description: "The highest level of coaching for lifters ready to go further.",
+    monthlyPriceLabel: "$19.99",
+    annualPriceLabel: "$149.99",
+    monthlyAmountCents: 1999,
+    annualAmountCents: 14999,
+    currency: "usd",
   },
 ];
 

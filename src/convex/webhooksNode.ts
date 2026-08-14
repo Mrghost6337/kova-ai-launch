@@ -38,9 +38,9 @@ export const handleStripeEvent = internalAction({
           userId:
             session.client_reference_id ?? session.metadata?.userId ?? undefined,
           planId: session.metadata?.planId ?? "unknown",
-          planName: session.metadata?.planName ?? "Kova AI",
+          planName: session.metadata?.planName ?? "KOVA AI",
           amount: session.amount_total ?? 0,
-          currency: session.currency ?? "eur",
+          currency: session.currency ?? "usd",
           status: "paid",
           stripeSessionId: session.id,
           email: session.customer_email ?? undefined,

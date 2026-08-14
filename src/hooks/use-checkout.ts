@@ -4,6 +4,8 @@ import { useAction } from "convex/react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+export type BillingInterval = "month" | "year";
+
 export function useCheckout() {
   const { isAuthenticated } = useAuth();
   const createCheckout = useAction(api.checkout.createCheckout);
@@ -11,7 +13,7 @@ export function useCheckout() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function buy(planId: string) {
+  async function buy(planId: string, billingInterval: BillingInterval = "month") {
     setError(null);
 
     if (!isAuthenticated) {
@@ -21,7 +23,7 @@ export function useCheckout() {
 
     setIsLoading(true);
     try {
-      const result = await createCheckout({ planId });
+      const result = await createCheckout({ planId, billingInterval });
       if (result.url) {
         window.location.href = result.url;
       } else {

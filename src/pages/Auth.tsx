@@ -130,7 +130,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       onClick={() => navigate("/")}
                     />
                   </div>
-                <CardTitle className="text-xl">Sign in to Kova AI</CardTitle>
+                <CardTitle className="text-xl">Sign in to KOVA AI</CardTitle>
                 <CardDescription>
                   Enter your email to log in or create an account
                 </CardDescription>
@@ -278,7 +278,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
           )}
 
           <div className="py-4 px-6 text-xs text-center text-muted-foreground bg-muted border-t rounded-b-lg">
-            Your account syncs your Kova AI plan and preferences.
+            Your account syncs your KOVA coaching plan and preferences.
           </div>
         </Card>
         </div>

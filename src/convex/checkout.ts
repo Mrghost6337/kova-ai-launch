@@ -9,16 +9,17 @@ import { PLANS } from "./plans";
 export const createCheckout = action({
   args: {
     planId: v.string(),
+    billingInterval: v.optional(v.union(v.literal("month"), v.literal("year"))),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
-      throw new Error("You need to be signed in to purchase Kova AI.");
+      throw new Error("You need to be signed in to purchase a KOVA plan.");
     }
 
-    const plan = PLANS.find((p) => p.id === args.planId);
-    if (!plan || plan.amountCents === 0) {
-      throw new Error("That plan is not available for purchase.");
+    const plan = PLANS.find((candidate) => candidate.id === args.planId);
+    if (!plan) {
+      throw new Error("That KOVA plan is not available for purchase.");
     }
 
     const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -30,23 +31,36 @@ export const createCheckout = action({
 
     const stripe = new Stripe(secretKey);
     const siteUrl = process.env.SITE_URL || "https://kova-ai.example";
+    const billingInterval = args.billingInterval ?? "month";
+    const amount =
+      billingInterval === "year"
+        ? plan.annualAmountCents
+        : plan.monthlyAmountCents;
+    const priceLabel =
+      billingInterval === "year"
+        ? plan.annualPriceLabel
+        : plan.monthlyPriceLabel;
 
     const session = await stripe.checkout.sessions.create({
-      mode: plan.mode,
+      mode: "subscription",
       client_reference_id: userId,
-      metadata: { userId, planId: plan.id, planName: plan.name },
+      metadata: {
+        userId,
+        planId: plan.id,
+        planName: plan.name,
+        billingInterval,
+      },
       line_items: [
         {
           quantity: 1,
           price_data: {
             currency: plan.currency,
             product_data: {
-              name: `Kova AI — ${plan.name}`,
-              description: plan.description,
+              name: `${plan.name} — ${billingInterval === "year" ? "Annual" : "Monthly"}`,
+              description: `${plan.description} ${priceLabel} per ${billingInterval}.`,
             },
-            unit_amount: plan.amountCents,
-            recurring:
-              plan.mode === "subscription" ? { interval: "month" } : undefined,
+            unit_amount: amount,
+            recurring: { interval: billingInterval },
           },
         },
       ],

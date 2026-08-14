@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 const links = [
+  { label: "Product", href: "#product" },
+  { label: "Features", href: "#features" },
+  { label: "How it works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
   { label: "About", href: "#about" },
-  { label: "Waitlist", href: "#waitlist" },
 ];
 
 export function Navbar() {
@@ -34,10 +36,7 @@ export function Navbar() {
           type="button"
           onClick={() => navigate("/")}
           className="font-serif text-[1.45rem] italic tracking-[-0.06em] text-white transition-opacity hover:opacity-70"
-          aria-label="Back to home"
-        >
-          Kova AI
-        </button>
+          aria-label="Back to home">KOVA AI</button>
 
         <div className="hidden items-center gap-8 md:flex">
           {links.map((link) => (
