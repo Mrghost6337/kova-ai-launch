@@ -78,8 +78,8 @@ export default function ProductDetail() {
               </motion.div>
             </div>
             <div className="grid grid-cols-2 items-start gap-3 sm:gap-5">
-              <motion.div initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}><ScreenshotCard src="/app/kova-coach.png" alt="KOVA Coach screen" label="Coach" /></motion.div>
-              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.22 }}><ScreenshotCard src="/app/kova-history.png" alt="KOVA History screen" label="History" className="mt-12 sm:mt-20" /></motion.div>
+              <motion.div initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}><ScreenshotCard src="/assets/kova-coach.png" alt="KOVA Coach screen" label="Coach" /></motion.div>
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.22 }}><ScreenshotCard src="/assets/kova-history.png" alt="KOVA History screen" label="History" className="mt-12 sm:mt-20" /></motion.div>
             </div>
           </div>
         </section>
