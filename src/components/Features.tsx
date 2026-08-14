@@ -1,15 +1,15 @@
 import { SectionReveal } from "./KovaBackground";
 
 const features = [
-  ["01", "Adaptive AI training", "Your next workout changes based on your performance and recovery."],
-  ["02", "Personalized workouts", "KOVA removes the guesswork from your split, exercises and progression."],
-  ["03", "Guided sessions", "Set logging, rest timers and haptic cues keep you focused through every session."],
-  ["04", "Progress tracking", "See training volume, sessions, personal records and long-term progress in one place."],
-  ["05", "Post-workout feedback", "Tell KOVA how the session felt and let it intelligently adapt what comes next."],
-  ["06", "Training history & phases", "Understand where you are in your program and what your next phase holds."],
-  ["07", "Apple Health", "Connect your health data directly from your iPhone to give KOVA more context."],
-  ["08", "Reminders & sync", "Keep training organized and consistent across your KOVA experience."],
-  ["09", "Export & account controls", "Your data stays manageable, accessible and in your hands."],
+  ["01", "Adaptive AI training", "Your next workout changes as you do."],
+  ["02", "Personalized workouts", "No need to plan your split or choose every exercise."],
+  ["03", "Guided sessions", "Log sets, follow rest timers and stay focused."],
+  ["04", "Progress tracking", "See your sessions, volume, PRs and progress in one place."],
+  ["05", "Post-workout feedback", "Share how it felt and KOVA adjusts your next workout."],
+  ["06", "Training history & phases", "See where you are now and what comes next."],
+  ["07", "Apple Health", "Connect Apple Health on your iPhone."],
+  ["08", "Reminders & sync", "Keep your training on track with simple reminders and sync."],
+  ["09", "Export & account controls", "Export your data and manage your account with ease."],
 ] as const;
 
 export function Features() {

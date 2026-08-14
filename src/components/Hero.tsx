@@ -19,14 +19,14 @@ export function Hero() {
           Train smarter.<br /><em className="text-white/62">Get stronger.</em>
         </motion.h1>
         <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.64, ease }} className="mt-9 max-w-xl text-sm leading-7 text-white/52 sm:mt-11 sm:text-base">
-          KOVA is an adaptive strength and hypertrophy coach for intermediate lifters. It recommends the right session, guides every set and learns from how you train.
+          KOVA builds your workout, guides each set, and changes your plan as you progress.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.78, ease }} className="mt-9 flex flex-col items-center gap-3 sm:mt-10 sm:flex-row">
           <button type="button" onClick={() => navigate("/app")} className="group inline-flex h-12 items-center gap-3 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-[0.12em] text-black transition-transform hover:scale-[1.03]">
             Explore KOVA AI <ArrowUpRight size={15} strokeWidth={1.8} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
           <button type="button" onClick={() => scrollTo("#how-it-works")} className="glass-pill inline-flex h-12 items-center gap-3 px-6 text-xs font-medium uppercase tracking-[0.12em] text-white/70 transition-colors hover:text-white">
-            See how it adapts <ArrowDown size={14} strokeWidth={1.5} />
+            How it works <ArrowDown size={14} strokeWidth={1.5} />
           </button>
         </motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.05 }} className="mt-20 flex items-center gap-3 text-[9px] font-medium uppercase tracking-[0.33em] text-white/38 sm:mt-28 sm:gap-5">

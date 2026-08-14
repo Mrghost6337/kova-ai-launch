@@ -9,19 +9,19 @@ import { SectionReveal } from "./KovaBackground";
 const features: Record<string, string[]> = {
   pro: [
     "Adaptive AI training",
-    "Personalized strength and hypertrophy workouts",
-    "Guided sessions with set logging and rest timers",
-    "Progress tracking and training history",
-    "Post-workout feedback and adaptation",
+    "Personalized strength workouts",
+    "Guided sessions with set logging",
+    "Progress and training history",
+    "Feedback that shapes your next workout",
     "Apple Health connection",
   ],
   ultra: [
     "Everything in KOVA PRO",
-    "The highest level of adaptive coaching",
-    "Deeper guidance across training phases",
-    "More intentional progression support",
-    "Priority access to the complete KOVA experience",
-    "Advanced account and data controls",
+    "KOVA's highest level of coaching",
+    "More guidance through each phase",
+    "Stronger support as you progress",
+    "The complete KOVA experience",
+    "Full data and account controls",
   ],
 };
 
@@ -43,7 +43,7 @@ export function Pricing() {
             <h2 className="section-title mt-5">Coaching that <em>adapts.</em></h2>
           </div>
           <p className="max-w-sm text-xs leading-5 text-white/35 sm:pb-1">
-            Choose the level of coaching that matches your ambition. Both plans include the complete adaptive training foundation.
+            Choose the coaching level that fits your goals.
           </p>
         </div>
 

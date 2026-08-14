@@ -1,9 +1,9 @@
 import { SectionReveal } from "./KovaBackground";
 
 const steps = [
-  { number: "01", title: "Start where you are", description: "Tell KOVA about your goals, experience and current state. It builds the right session for you." },
-  { number: "02", title: "Train with guidance", description: "Follow the prescribed workout, log every set and use rest timers and cues to stay present." },
-  { number: "03", title: "Recover and adapt", description: "Share your effort and soreness after training. KOVA learns from the session and adjusts what comes next." },
+  { number: "01", title: "Start where you are", description: "Set your goals and tell KOVA where you are starting." },
+  { number: "02", title: "Train with guidance", description: "Follow the workout, log your sets and use the rest timer." },
+  { number: "03", title: "Recover and adapt", description: "Share how you feel. KOVA uses it to plan your next session." },
 ];
 
 export function HowItWorks() {

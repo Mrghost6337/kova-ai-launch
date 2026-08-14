@@ -10,27 +10,27 @@ import { useState } from "react";
 import { Link } from "react-router";
 
 const features = [
-  "Adaptive AI training that responds to performance and recovery",
-  "Personalized strength and hypertrophy workouts",
-  "Guided sessions with set logging, rest timers and haptic cues",
-  "Progress tracking for volume, sessions, PRs and long-term progress",
-  "Post-workout feedback that shapes what comes next",
-  "Training history and structured phases",
-  "Apple Health connection for iPhone health data",
-  "Reminders, sync, export and account controls",
+  "Workouts that change with your progress",
+  "Personalized strength workouts",
+  "Guided sessions with set logging and rest timers",
+  "Track sessions, volume, PRs and progress",
+  "Feedback that shapes your next workout",
+  "Training history and phases",
+  "Apple Health for iPhone",
+  "Reminders, sync, export and account tools",
 ];
 
 const coachingLevels: Record<string, string[]> = {
   pro: [
-    "The complete KOVA adaptive training experience",
-    "Personalized workouts for your current goals",
-    "Guided sessions and intelligent progression",
-    "Feedback-led adaptation after every workout",
+    "The complete KOVA training experience",
+    "Workouts built around your goals",
+    "Guided sessions and steady progress",
+    "Your feedback shapes the next workout",
   ],
   ultra: [
     "Everything in KOVA PRO",
-    "The highest level of adaptive coaching",
-    "Deeper guidance across training phases",
+    "KOVA's highest level of coaching",
+    "More guidance through each phase",
     "The ultimate KOVA experience for serious lifters",
   ],
 };
@@ -57,7 +57,7 @@ export default function ProductDetail() {
                 Your training. <em className="text-white/55">Adapted to you.</em>
               </h1>
               <p className="mt-8 max-w-xl text-base leading-8 text-white/50">
-                KOVA is an adaptive strength and hypertrophy coach for intermediate lifters who want intelligent, personalized training without programming their own workouts.
+                KOVA is a smart strength coach for lifters who want a clear plan without writing every workout.
               </p>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => buy("pro", billingInterval)} disabled={isLoading} className="group inline-flex h-12 items-center justify-center gap-3 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-[0.12em] text-black transition-transform hover:scale-[1.03] disabled:opacity-60">
@@ -67,7 +67,7 @@ export default function ProductDetail() {
                 <a href="#plans" className="glass-pill inline-flex h-12 items-center justify-center gap-3 px-6 text-xs font-medium uppercase tracking-[0.12em] text-white/70 transition-colors hover:text-white">Compare plans</a>
               </div>
               {error && <p className="mt-4 max-w-md text-xs text-white/60">{error}</p>}
-              <p className="mt-5 text-[10px] uppercase tracking-[0.16em] text-white/30">For intermediate lifters · iOS app coming soon</p>
+              <p className="mt-5 text-[10px] uppercase tracking-[0.16em] text-white/30">For intermediate lifters · Coming soon to iOS</p>
             </motion.div>
           </div>
 
@@ -99,7 +99,7 @@ export default function ProductDetail() {
             <div className="max-w-2xl">
               <p className="eyebrow">What KOVA does</p>
               <h2 className="section-title mt-5">A coach that <em>learns your training.</em></h2>
-              <p className="mt-6 text-base leading-8 text-white/45">KOVA recommends the right session for your current state, guides you through every set, and uses your performance, effort and soreness to intelligently adapt what comes next.</p>
+              <p className="mt-6 text-base leading-8 text-white/45">KOVA picks your next session, guides each set and learns from your feedback.</p>
             </div>
             <div className="mt-14 grid gap-x-8 gap-y-0 border-t border-white/[0.1] sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (

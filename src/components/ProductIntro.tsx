@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import { SectionReveal } from "./KovaBackground";
 
 const pillars = [
-  { number: "01", title: "Adaptive training", question: "Your next workout changes.", description: "KOVA uses your performance, effort and recovery to recommend the right session for your current state." },
-  { number: "02", title: "Guided sessions", question: "Just open and train.", description: "Every set, rep and rest period is there when you need it, so you can focus on the work instead of programming." },
-  { number: "03", title: "Progress that learns", question: "Feedback shapes what comes next.", description: "After every session, tell KOVA how it felt. Your training evolves with the way you actually train." },
+  { number: "01", title: "Adaptive training", question: "Your next workout changes.", description: "KOVA uses your last workout and recovery to pick the right session." },
+  { number: "02", title: "Guided sessions", question: "Just open and train.", description: "Your sets, reps and rest times are ready, so you can focus on training." },
+  { number: "03", title: "Progress that learns", question: "Feedback shapes what comes next.", description: "Tell KOVA how it felt. Your next workout adjusts from there." },
 ];
 
 export function ProductIntro() {
@@ -13,7 +13,7 @@ export function ProductIntro() {
       <SectionReveal className="mx-auto max-w-6xl">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
           <div><p className="eyebrow">Your training, adapted to you</p><h2 className="section-title mt-5 max-w-md">A coach that <em>keeps learning.</em></h2></div>
-          <div className="lg:pt-16"><p className="max-w-xl text-base leading-8 text-white/48 sm:text-lg">KOVA is built for intermediate lifters who want intelligent, personalized strength and hypertrophy training without having to program their own workouts.</p></div>
+          <div className="lg:pt-16"><p className="max-w-xl text-base leading-8 text-white/48 sm:text-lg">KOVA is for lifters who want a clear plan without building every workout themselves.</p></div>
         </div>
         <div className="mt-16 grid gap-3 md:mt-24 md:grid-cols-3">
           {pillars.map((pillar, index) => (
