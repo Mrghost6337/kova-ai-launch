@@ -6,8 +6,8 @@ import { useLocation, useNavigate } from "react-router";
 type NavLink = { label: string; href?: string; to?: string };
 
 const links: NavLink[] = [
-  { label: "About", href: "#about" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "About", href: "#product" },
+  { label: "Pricing", to: "/app#plans" },
   { label: "App", to: "/app" },
 ];
 
@@ -46,7 +46,7 @@ export function Navbar() {
             <button
               key={link.label}
               type="button"
-              onClick={() => link.to ? navigate(link.to) : goToSection(link.href ?? "#about")}
+              onClick={() => link.to ? navigate(link.to) : goToSection(link.href ?? "#product")}
               className="rounded-full px-3 py-2 text-[12px] font-medium tracking-[-0.01em] text-white/62 transition-colors hover:bg-white/[0.07] hover:text-white"
             >
               {link.label}
@@ -89,7 +89,7 @@ export function Navbar() {
                 onClick={() => {
                   setIsOpen(false);
                   if (link.to) navigate(link.to);
-                  else goToSection(link.href ?? "#about");
+                  else goToSection(link.href ?? "#product");
                 }}
                 className="block w-full rounded-2xl px-4 py-3 text-left text-sm font-medium text-white/68 transition-colors hover:bg-white/[0.07] hover:text-white"
               >
