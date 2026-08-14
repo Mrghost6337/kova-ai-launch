@@ -3,12 +3,12 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
-const links = [
-  { label: "Product", href: "#product" },
-  { label: "Features", href: "#features" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
+type NavLink = { label: string; href?: string; to?: string };
+
+const links: NavLink[] = [
   { label: "About", href: "#about" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "App", to: "/app" },
 ];
 
 export function Navbar() {
@@ -41,9 +41,9 @@ export function Navbar() {
         <div className="hidden items-center gap-8 md:flex">
           {links.map((link) => (
             <button
-              key={link.href}
+              key={link.label}
               type="button"
-              onClick={() => goToSection(link.href)}
+              onClick={() => link.to ? navigate(link.to) : goToSection(link.href ?? "#about")}
               className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/48 transition-colors hover:text-white"
             >
               {link.label}
@@ -81,11 +81,12 @@ export function Navbar() {
           >
             {links.map((link) => (
               <button
-                key={link.href}
+                key={link.label}
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
-                  goToSection(link.href);
+                  if (link.to) navigate(link.to);
+                  else goToSection(link.href ?? "#about");
                 }}
                 className="block w-full rounded-2xl px-4 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white"
               >
