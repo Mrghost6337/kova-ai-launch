@@ -16,8 +16,8 @@ export default function Landing() {
         <div className="relative isolate overflow-hidden">
           <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.58]">
             <DotField
-              dotRadius={1.5}
-              dotSpacing={16}
+              dotRadius={5}
+              dotSpacing={20}
               bulgeStrength={67}
               glowRadius={160}
               sparkle={false}
