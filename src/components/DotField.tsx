@@ -27,14 +27,19 @@ type Dot = {
   vy: number;
   x: number;
   y: number;
+  phase: number;
+  size: number;
 };
 
 type MouseState = {
   x: number;
   y: number;
-  prevX: number;
-  prevY: number;
+  targetX: number;
+  targetY: number;
+  prevTargetX: number;
+  prevTargetY: number;
   speed: number;
+  inside: boolean;
 };
 
 const DotField = memo(function DotField({
@@ -58,13 +63,17 @@ const DotField = memo(function DotField({
   const dotsRef = useRef<Dot[]>([]);
   const rafRef = useRef<number | null>(null);
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rebuildRef = useRef<(() => void) | null>(null);
   const sizeRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0 });
   const mouseRef = useRef<MouseState>({
     x: -9999,
     y: -9999,
-    prevX: -9999,
-    prevY: -9999,
+    targetX: -9999,
+    targetY: -9999,
+    prevTargetX: -9999,
+    prevTargetY: -9999,
     speed: 0,
+    inside: false,
   });
   const glowOpacityRef = useRef(0);
   const engagementRef = useRef(0);
@@ -104,22 +113,35 @@ const DotField = memo(function DotField({
     if (!context) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const buildDots = (width: number, height: number) => {
       const props = propsRef.current;
-      const step = props.dotRadius + props.dotSpacing;
-      const columns = Math.floor(width / step);
-      const rows = Math.floor(height / step);
-      const padX = (width % step) / 2;
-      const padY = (height % step) / 2;
+      const step = Math.max(props.dotRadius * 2 + 2, props.dotSpacing);
+      const columns = Math.ceil(width / step) + 1;
+      const rows = Math.ceil(height / step) + 1;
+      const padX = (width - (columns - 1) * step) / 2;
+      const padY = (height - (rows - 1) * step) / 2;
       const dots = new Array<Dot>(rows * columns);
       let index = 0;
 
       for (let row = 0; row < rows; row += 1) {
         for (let column = 0; column < columns; column += 1) {
-          const x = padX + column * step + step / 2;
-          const y = padY + row * step + step / 2;
-          dots[index] = { ax: x, ay: y, sx: x, sy: y, vx: 0, vy: 0, x, y };
+          const x = padX + column * step;
+          const y = padY + row * step;
+          const seed = (row * 17 + column * 31) % 100;
+          dots[index] = {
+            ax: x,
+            ay: y,
+            sx: x,
+            sy: y,
+            vx: 0,
+            vy: 0,
+            x,
+            y,
+            phase: ((row * 0.87 + column * 1.31) % 12) * 0.52,
+            size: 0.72 + seed / 330,
+          };
           index += 1;
         }
       }
@@ -155,19 +177,32 @@ const DotField = memo(function DotField({
 
     const handleMouseMove = (event: MouseEvent) => {
       const size = sizeRef.current;
-      mouseRef.current.x = event.pageX - size.offsetX;
-      mouseRef.current.y = event.pageY - size.offsetY;
+      const x = event.pageX - size.offsetX;
+      const y = event.pageY - size.offsetY;
+      const inside = x >= -40 && x <= size.w + 40 && y >= -40 && y <= size.h + 40;
+      const mouse = mouseRef.current;
+
+      mouse.inside = inside;
+      if (inside) {
+        mouse.targetX = x;
+        mouse.targetY = y;
+      }
     };
 
     const updateMouseSpeed = () => {
       const mouse = mouseRef.current;
-      const dx = mouse.prevX - mouse.x;
-      const dy = mouse.prevY - mouse.y;
+      if (!mouse.inside) {
+        mouse.speed *= 0.86;
+        return;
+      }
+
+      const dx = mouse.prevTargetX - mouse.targetX;
+      const dy = mouse.prevTargetY - mouse.targetY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      mouse.speed += (distance - mouse.speed) * 0.5;
+      mouse.speed += (Math.min(distance, 40) - mouse.speed) * 0.35;
       if (mouse.speed < 0.001) mouse.speed = 0;
-      mouse.prevX = mouse.x;
-      mouse.prevY = mouse.y;
+      mouse.prevTargetX = mouse.targetX;
+      mouse.prevTargetY = mouse.targetY;
     };
 
     const speedInterval = window.setInterval(updateMouseSpeed, 20);
@@ -179,10 +214,13 @@ const DotField = memo(function DotField({
       const mouse = mouseRef.current;
       const { w: width, h: height } = sizeRef.current;
       const props = propsRef.current;
-      const time = frameCount * 0.02;
-      const targetEngagement = Math.min(mouse.speed / 5, 1);
+      const time = frameCount * (reducedMotion ? 0 : 0.014);
+      const motionScale = reducedMotion ? 0 : 1;
+      const targetEngagement = mouse.inside ? Math.min(0.28 + mouse.speed / 16, 1) : 0;
 
-      engagementRef.current += (targetEngagement - engagementRef.current) * 0.06;
+      mouse.x += (mouse.targetX - mouse.x) * 0.14;
+      mouse.y += (mouse.targetY - mouse.y) * 0.14;
+      engagementRef.current += (targetEngagement - engagementRef.current) * 0.075;
       if (engagementRef.current < 0.001) engagementRef.current = 0;
       const engagement = engagementRef.current;
 
@@ -190,18 +228,34 @@ const DotField = memo(function DotField({
       if (glowRef.current) {
         glowRef.current.setAttribute("cx", String(mouse.x));
         glowRef.current.setAttribute("cy", String(mouse.y));
-        glowRef.current.style.opacity = String(glowOpacityRef.current);
+        glowRef.current.style.opacity = String(glowOpacityRef.current * 0.7);
       }
 
       context.clearRect(0, 0, width, height);
+
+      const ambient = context.createRadialGradient(
+        width * 0.5,
+        height * 0.38,
+        0,
+        width * 0.5,
+        height * 0.38,
+        Math.max(width, height) * 0.8,
+      );
+      ambient.addColorStop(0, "rgba(255, 255, 255, 0.045)");
+      ambient.addColorStop(0.48, "rgba(255, 255, 255, 0.012)");
+      ambient.addColorStop(1, "rgba(0, 0, 0, 0)");
+      context.fillStyle = ambient;
+      context.fillRect(0, 0, width, height);
+
       const gradient = context.createLinearGradient(0, 0, width, height);
       gradient.addColorStop(0, props.gradientFrom);
+      gradient.addColorStop(0.48, "rgba(255, 255, 255, 0.07)");
       gradient.addColorStop(1, props.gradientTo);
       context.fillStyle = gradient;
       context.beginPath();
 
       const cursorRadiusSquared = props.cursorRadius * props.cursorRadius;
-      const radius = props.dotRadius / 2;
+      const baseRadius = props.dotRadius / 2;
 
       for (let index = 0; index < dots.length; index += 1) {
         const dot = dots[index];
@@ -215,8 +269,8 @@ const DotField = memo(function DotField({
             const influence = 1 - distance / props.cursorRadius;
             const push = influence * influence * props.bulgeStrength * engagement;
             const angle = Math.atan2(dy, dx);
-            dot.sx += (dot.ax - Math.cos(angle) * push - dot.sx) * 0.15;
-            dot.sy += (dot.ay - Math.sin(angle) * push - dot.sy) * 0.15;
+            dot.sx += (dot.ax - Math.cos(angle) * push - dot.sx) * 0.16;
+            dot.sy += (dot.ay - Math.sin(angle) * push - dot.sy) * 0.16;
           } else {
             const angle = Math.atan2(dy, dx);
             const move = (500 / Math.max(distance, 1)) * (mouse.speed * props.cursorForce);
@@ -224,8 +278,8 @@ const DotField = memo(function DotField({
             dot.vy += Math.sin(angle) * -move;
           }
         } else if (props.bulgeOnly) {
-          dot.sx += (dot.ax - dot.sx) * 0.1;
-          dot.sy += (dot.ay - dot.sy) * 0.1;
+          dot.sx += (dot.ax - dot.sx) * 0.085;
+          dot.sy += (dot.ay - dot.sy) * 0.085;
         }
 
         if (!props.bulgeOnly) {
@@ -237,25 +291,59 @@ const DotField = memo(function DotField({
           dot.sy += (dot.y - dot.sy) * 0.1;
         }
 
-        let drawX = dot.sx;
-        let drawY = dot.sy;
-        if (props.waveAmplitude > 0) {
-          drawY += Math.sin(dot.ax * 0.03 + time) * props.waveAmplitude;
-          drawX += Math.cos(dot.ay * 0.03 + time * 0.7) * props.waveAmplitude * 0.5;
-        }
+        const edgeFade = Math.min(
+          1,
+          Math.max(0, dot.sx / 100),
+          Math.max(0, (width - dot.sx) / 100),
+          Math.max(0, dot.sy / 100),
+          Math.max(0, (height - dot.sy) / 100),
+        );
+        if (edgeFade <= 0.02) continue;
 
-        const drawRadius = props.sparkle && ((index * 2654435761 ^ (frameCount >> 3)) >>> 0) % 100 < 3
-          ? radius * 1.8
-          : radius;
+        const wave = Math.sin(dot.ax * 0.018 + time + dot.phase) * props.waveAmplitude * motionScale;
+        const drawX = dot.sx + Math.cos(dot.ay * 0.014 + time * 0.7 + dot.phase) * props.waveAmplitude * 0.28 * motionScale;
+        const drawY = dot.sy + wave;
+        const pulse = 0.9 + Math.sin(time * 1.4 + dot.phase) * 0.08 * motionScale;
+        const drawRadius = baseRadius * dot.size * edgeFade * pulse;
+
         context.moveTo(drawX + drawRadius, drawY);
         context.arc(drawX, drawY, drawRadius, 0, TWO_PI);
       }
 
+      context.globalAlpha = 0.95;
       context.fill();
+      context.globalAlpha = 1;
+
+      context.beginPath();
+      for (let index = 0; index < dots.length; index += 29) {
+        const dot = dots[index];
+        const drawX = dot.sx;
+        const drawY = dot.sy + Math.sin(dot.ax * 0.018 + time + dot.phase) * props.waveAmplitude * motionScale;
+        const edgeFade = Math.min(1, Math.max(0, drawX / 120), Math.max(0, (width - drawX) / 120), Math.max(0, drawY / 120), Math.max(0, (height - drawY) / 120));
+        const highlightRadius = baseRadius * (1.5 + Math.sin(time + dot.phase) * 0.25) * edgeFade;
+        if (highlightRadius > 0.02) {
+          context.moveTo(drawX + highlightRadius, drawY);
+          context.arc(drawX, drawY, highlightRadius, 0, TWO_PI);
+        }
+      }
+      context.fillStyle = "rgba(255, 255, 255, 0.22)";
+      context.globalCompositeOperation = "screen";
+      context.globalAlpha = 0.65;
+      context.fill();
+      context.globalAlpha = 1;
+      context.globalCompositeOperation = "source-over";
+
       rafRef.current = requestAnimationFrame(tick);
     };
 
     resizeCanvas();
+    rebuildRef.current = () => {
+      const { w, h } = sizeRef.current;
+      if (w > 0 && h > 0) buildDots(w, h);
+    };
+
+    const resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resizeCanvas) : null;
+    resizeObserver?.observe(parent);
     window.addEventListener("resize", scheduleResize);
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     rafRef.current = requestAnimationFrame(tick);
@@ -264,35 +352,15 @@ const DotField = memo(function DotField({
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       window.clearInterval(speedInterval);
       if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", scheduleResize);
       window.removeEventListener("mousemove", handleMouseMove);
+      rebuildRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const parent = canvas?.parentElement;
-    if (!canvas || !parent) return;
-
-    const rect = parent.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
-
-    const props = propsRef.current;
-    const step = props.dotRadius + props.dotSpacing;
-    const columns = Math.floor(rect.width / step);
-    const rows = Math.floor(rect.height / step);
-    const padX = (rect.width % step) / 2;
-    const padY = (rect.height % step) / 2;
-    const dots: Dot[] = [];
-
-    for (let row = 0; row < rows; row += 1) {
-      for (let column = 0; column < columns; column += 1) {
-        const x = padX + column * step + step / 2;
-        const y = padY + row * step + step / 2;
-        dots.push({ ax: x, ay: y, sx: x, sy: y, vx: 0, vy: 0, x, y });
-      }
-    }
-    dotsRef.current = dots;
+    rebuildRef.current?.();
   }, [dotRadius, dotSpacing]);
 
   return (
@@ -302,6 +370,7 @@ const DotField = memo(function DotField({
         <defs>
           <radialGradient id={glowIdRef.current}>
             <stop offset="0%" stopColor={glowColor} />
+            <stop offset="42%" stopColor={glowColor} stopOpacity="0.18" />
             <stop offset="100%" stopColor="transparent" />
           </radialGradient>
         </defs>

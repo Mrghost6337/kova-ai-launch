@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import React, { useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type RootState } from "@react-three/fiber";
 import { Color, Mesh, ShaderMaterial, type IUniform } from "three";
 import "./Silk.css";
@@ -76,30 +76,54 @@ void main() {
 `;
 
 interface SilkPlaneProps {
-  uniforms: SilkUniforms;
+  speed: number;
+  scale: number;
+  color: string;
+  noiseIntensity: number;
+  rotation: number;
 }
 
-const SilkPlane = forwardRef<Mesh, SilkPlaneProps>(function SilkPlane({ uniforms }, ref) {
+const SilkPlane = function SilkPlane({
+  speed,
+  scale,
+  color,
+  noiseIntensity,
+  rotation,
+}: SilkPlaneProps) {
+  const meshRef = useRef<Mesh>(null);
   const { viewport } = useThree();
+  const uniforms = useMemo<SilkUniforms>(
+    () => ({
+      uSpeed: { value: speed },
+      uScale: { value: scale },
+      uNoiseIntensity: { value: noiseIntensity },
+      uColor: { value: new Color(...hexToNormalizedRGB(color)) },
+      uRotation: { value: rotation },
+      uTime: { value: 0 },
+    }),
+    [color, noiseIntensity, rotation, scale, speed],
+  );
 
   useLayoutEffect(() => {
-    const mesh = ref as React.MutableRefObject<Mesh | null>;
-    mesh.current?.scale.set(viewport.width, viewport.height, 1);
-  }, [ref, viewport]);
+    meshRef.current?.scale.set(viewport.width, viewport.height, 1);
+  }, [viewport]);
 
   useFrame((_state: RootState, delta: number) => {
-    const mesh = ref as React.MutableRefObject<Mesh | null>;
-    const material = mesh.current?.material as (ShaderMaterial & { uniforms: SilkUniforms }) | undefined;
-    if (material) material.uniforms.uTime.value += 0.1 * delta;
+    const material = meshRef.current?.material;
+    if (material instanceof ShaderMaterial) {
+      // Three.js uniforms are intentionally updated outside React on every frame.
+      // eslint-disable-next-line react-hooks/immutability
+      material.uniforms.uTime.value += 0.1 * delta;
+    }
   });
 
   return (
-    <mesh ref={ref}>
+    <mesh ref={meshRef}>
       <planeGeometry args={[1, 1, 1, 1]} />
       <shaderMaterial uniforms={uniforms} vertexShader={vertexShader} fragmentShader={fragmentShader} />
     </mesh>
   );
-});
+};
 
 SilkPlane.displayName = "SilkPlane";
 
@@ -117,36 +141,18 @@ const Silk: React.FC<SilkProps> = ({
   color = "#7B7481",
   noiseIntensity = 1.5,
   rotation = 0,
-}) => {
-  const meshRef = useRef<Mesh>(null);
-  const uniforms = useMemo<SilkUniforms>(
-    () => ({
-      uSpeed: { value: speed },
-      uScale: { value: scale },
-      uNoiseIntensity: { value: noiseIntensity },
-      uColor: { value: new Color(...hexToNormalizedRGB(color)) },
-      uRotation: { value: rotation },
-      uTime: { value: 0 },
-    }),
-    // The uniforms are intentionally created once and updated below.
-    [],
-  );
-
-  useEffect(() => {
-    uniforms.uSpeed.value = speed;
-    uniforms.uScale.value = scale;
-    uniforms.uNoiseIntensity.value = noiseIntensity;
-    uniforms.uColor.value.setRGB(...hexToNormalizedRGB(color));
-    uniforms.uRotation.value = rotation;
-  }, [color, noiseIntensity, rotation, scale, speed, uniforms]);
-
-  return (
-    <div className="silk-container" aria-hidden="true">
-      <Canvas dpr={[1, 2]} frameloop="always">
-        <SilkPlane ref={meshRef} uniforms={uniforms} />
-      </Canvas>
-    </div>
-  );
-};
+}) => (
+  <div className="silk-container" aria-hidden="true">
+    <Canvas dpr={[1, 2]} frameloop="always">
+      <SilkPlane
+        speed={speed}
+        scale={scale}
+        color={color}
+        noiseIntensity={noiseIntensity}
+        rotation={rotation}
+      />
+    </Canvas>
+  </div>
+);
 
 export default Silk;

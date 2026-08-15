@@ -36,22 +36,26 @@ export function Waitlist() {
   };
 
   return (
-    <section id="waitlist" className="section-shell px-6 py-24 sm:py-36">
-      <SectionReveal className="mx-auto max-w-5xl">
+    <section id="waitlist" className="section-shell relative overflow-hidden px-6 py-28 sm:py-40">
+      <div className="pointer-events-none absolute inset-0 z-0 opacity-95">
+        <DotField
+          dotRadius={1.45}
+          dotSpacing={18}
+          cursorRadius={360}
+          bulgeStrength={76}
+          glowRadius={220}
+          waveAmplitude={1.15}
+          sparkle
+          gradientFrom="rgba(255, 255, 255, 0.17)"
+          gradientTo="rgba(255, 255, 255, 0.018)"
+          glowColor="#ffffff"
+        />
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-48 bg-gradient-to-b from-black via-black/55 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-t from-black via-black/65 to-transparent" />
+      <SectionReveal className="relative z-10 mx-auto max-w-5xl">
         <div className="liquid-glass relative overflow-hidden rounded-[2rem] px-5 py-12 sm:px-10 sm:py-16">
-          <div className="pointer-events-none absolute inset-0 z-0 opacity-80">
-            <DotField
-              dotRadius={1.35}
-              dotSpacing={16}
-              cursorRadius={260}
-              bulgeStrength={42}
-              glowRadius={140}
-              gradientFrom="rgba(255, 255, 255, 0.14)"
-              gradientTo="rgba(255, 255, 255, 0.025)"
-              glowColor="#ffffff"
-            />
-          </div>
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-[1] size-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.06] blur-[100px]" />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-[1] size-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.055] blur-[120px]" />
           <div className="relative z-10">
             <div className="mx-auto max-w-xl text-center">
               <p className="eyebrow">KOVA AI · Coming soon to iOS</p>

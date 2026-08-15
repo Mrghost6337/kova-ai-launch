@@ -4,6 +4,8 @@
   height: 100%;
   overflow: hidden;
   isolation: isolate;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%);
 }
 
 .dot-field-container canvas,
@@ -16,10 +18,19 @@
 }
 
 .dot-field-container canvas {
-  opacity: 0.9;
+  opacity: 0.94;
+  filter: blur(0.1px);
 }
 
 .dot-field-glow {
   pointer-events: none;
   overflow: visible;
+  mix-blend-mode: screen;
+}
+
+@media (max-width: 640px) {
+  .dot-field-container {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+  }
 }

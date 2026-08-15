@@ -173,6 +173,13 @@ input:focus-visible {
     linear-gradient(180deg, #050505 0%, #000 44%, #050505 100%);
 }
 
+.kova-background__scene {
+  position: absolute;
+  inset: -8% 0;
+  transform-origin: center;
+  will-change: transform;
+}
+
 .kova-background__orb {
   position: absolute;
   border-radius: 9999px;
