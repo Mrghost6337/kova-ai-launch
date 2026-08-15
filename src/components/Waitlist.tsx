@@ -39,7 +39,7 @@ export function Waitlist() {
       id="waitlist"
       className="section-shell relative flex min-h-[640px] items-center justify-center overflow-hidden px-5 py-36 sm:min-h-[720px] sm:px-8 sm:py-44"
     >
-      <SectionReveal className="relative z-10 w-full max-w-2xl">
+      <SectionReveal className="relative z-10 w-full max-w-3xl">
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,7 +54,7 @@ export function Waitlist() {
               key="success"
               initial={{ opacity: 0, y: 16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="mx-auto flex max-w-xl items-center justify-center gap-3 rounded-full border border-white/25 bg-black/65 px-6 py-4 text-sm text-white shadow-[0_0_60px_rgba(255,255,255,0.08),0_20px_70px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+              className="mx-auto flex max-w-2xl items-center justify-center gap-3 rounded-full border border-white/25 bg-black/65 px-7 py-5 text-base text-white shadow-[0_0_60px_rgba(255,255,255,0.08),0_20px_70px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
               aria-live="polite"
             >
               <span className="flex size-5 items-center justify-center rounded-full bg-white text-black">
@@ -70,10 +70,10 @@ export function Waitlist() {
               whileHover={{ scale: 1.012 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               onSubmit={handleSubmit}
-              className="group relative mx-auto max-w-xl"
+              className="group relative mx-auto max-w-2xl"
             >
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-white/[0.07] opacity-0 blur-2xl transition-opacity duration-700 group-hover:opacity-100 group-focus-within:opacity-100" />
-              <div className="relative flex flex-col gap-2 rounded-[1.9rem] border border-white/25 bg-black/60 p-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.16),0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[border-color,box-shadow] duration-500 group-focus-within:border-white/45 group-focus-within:shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_0_55px_rgba(255,255,255,0.1),0_20px_80px_rgba(0,0,0,0.55)] sm:flex-row sm:items-center sm:rounded-full">
+              <div className="relative flex flex-col gap-2 rounded-[2rem] border border-white/25 bg-black/60 p-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.16),0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[border-color,box-shadow] duration-500 group-focus-within:border-white/45 group-focus-within:shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_0_55px_rgba(255,255,255,0.1),0_20px_80px_rgba(0,0,0,0.55)] sm:flex-row sm:items-center sm:rounded-full">
                 <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
                 <label htmlFor="waitlist-email" className="sr-only">Your email</label>
                 <input
@@ -85,14 +85,14 @@ export function Waitlist() {
                     setError("");
                   }}
                   placeholder="Your email"
-                  className="h-12 min-w-0 flex-1 rounded-full bg-transparent px-5 text-base tracking-[-0.01em] text-white outline-none placeholder:text-white/45 sm:h-14 sm:px-6"
+                  className="h-14 min-w-0 flex-1 rounded-full bg-transparent px-6 text-lg tracking-[-0.01em] text-white outline-none placeholder:text-white/45 sm:h-16 sm:px-7"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? "waitlist-error" : undefined}
                 />
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="relative h-12 overflow-hidden rounded-full bg-white px-7 text-[15px] font-semibold tracking-[-0.02em] text-black transition-all duration-300 hover:bg-white/90 hover:shadow-[0_0_28px_rgba(255,255,255,0.24)] disabled:cursor-not-allowed disabled:opacity-60 sm:h-14 sm:min-w-[168px]"
+                  className="relative h-14 overflow-hidden rounded-full bg-white px-8 text-base font-semibold tracking-[-0.02em] text-black transition-all duration-300 hover:bg-white/90 hover:shadow-[0_0_28px_rgba(255,255,255,0.24)] disabled:cursor-not-allowed disabled:opacity-60 sm:h-16 sm:min-w-[190px]"
                 >
                   <span className="relative z-10">{isSubmitting ? "Joining…" : "Join Waitlist"}</span>
                   <span className="absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-black/10 opacity-0 transition-all duration-500 group-hover:left-[120%] group-hover:opacity-100" />
