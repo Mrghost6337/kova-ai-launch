@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
+import Silk from "./Silk";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -10,7 +11,17 @@ export function Hero() {
 
   return (
     <section className="relative flex min-h-[780px] items-center justify-center overflow-hidden px-6 pb-24 pt-36 sm:min-h-[860px] lg:pb-32">
-      <div className="pointer-events-none absolute left-1/2 top-[27%] h-[400px] w-[min(70vw,760px)] -translate-x-1/2 rounded-full bg-white/[0.045] blur-[110px]" />
+      <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.68]">
+        <Silk
+          speed={8.9}
+          scale={1.4}
+          color="#7B7481"
+          noiseIntensity={0.6}
+          rotation={0}
+        />
+      </div>
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-black/10 via-black/20 to-black/75" />
+      <div className="pointer-events-none absolute left-1/2 top-[27%] z-[2] h-[400px] w-[min(70vw,760px)] -translate-x-1/2 rounded-full bg-white/[0.045] blur-[110px]" />
       <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3, ease }} className="mb-8 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.28em] text-white/48 sm:mb-10">
           <span className="size-1 rounded-full bg-white/70" /> KOVA AI · Your training, adapted to you <span className="size-1 rounded-full bg-white/30" />
