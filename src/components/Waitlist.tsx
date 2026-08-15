@@ -40,6 +40,14 @@ export function Waitlist() {
       className="section-shell relative flex min-h-[640px] items-center justify-center overflow-hidden px-5 py-36 sm:min-h-[720px] sm:px-8 sm:py-44"
     >
       <SectionReveal className="relative z-10 w-full max-w-2xl">
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-6 text-center text-[10px] font-medium uppercase tracking-[0.24em] text-white/55"
+        >
+          Join the waitlist
+        </motion.p>
         <AnimatePresence mode="wait">
           {submitted ? (
             <motion.div
