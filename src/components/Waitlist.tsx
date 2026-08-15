@@ -39,16 +39,14 @@ export function Waitlist() {
     <section id="waitlist" className="section-shell relative overflow-hidden px-6 py-28 sm:py-40">
       <div className="pointer-events-none absolute inset-0 z-0 opacity-95">
         <DotField
-          dotRadius={1.45}
-          dotSpacing={18}
-          cursorRadius={360}
-          bulgeStrength={76}
-          glowRadius={220}
-          waveAmplitude={1.15}
-          sparkle
-          gradientFrom="rgba(255, 255, 255, 0.17)"
-          gradientTo="rgba(255, 255, 255, 0.018)"
-          glowColor="#ffffff"
+          dotRadius={1.5}
+          dotSpacing={16}
+          bulgeStrength={67}
+          glowRadius={160}
+          sparkle={false}
+          waveAmplitude={0}
+          gradientFrom="#ffffff"
+          gradientTo="#ffffff"
         />
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-48 bg-gradient-to-b from-black via-black/55 to-transparent" />
