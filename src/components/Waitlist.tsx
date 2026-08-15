@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMutation } from "convex/react";
 import { Check } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import DotField from "./DotField";
 import { SectionReveal } from "./KovaBackground";
 
 export function Waitlist() {
@@ -40,36 +39,6 @@ export function Waitlist() {
       id="waitlist"
       className="section-shell relative flex min-h-[640px] items-center justify-center overflow-hidden px-5 py-36 sm:min-h-[720px] sm:px-8 sm:py-44"
     >
-      <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.62]">
-        <DotField
-          dotRadius={1.5}
-          dotSpacing={16}
-          bulgeStrength={67}
-          glowRadius={160}
-          sparkle={false}
-          waveAmplitude={0}
-          gradientFrom="#ffffff"
-          gradientTo="#ffffff"
-        />
-      </div>
-
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,transparent_8%,rgba(0,0,0,0.14)_48%,rgba(0,0,0,0.88)_100%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-52 bg-gradient-to-b from-black via-black/65 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-t from-black via-black/70 to-transparent" />
-
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 z-[2] h-[min(76vw,620px)] w-[min(76vw,620px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.055]"
-        animate={{ rotate: [0, 7, -4, 0], scale: [1, 1.025, 0.99, 1] }}
-        transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 z-[2] h-[min(48vw,390px)] w-[min(48vw,390px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.045]"
-        animate={{ rotate: [0, -10, 5, 0], scale: [1, 0.98, 1.03, 1] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-      />
-
       <SectionReveal className="relative z-10 w-full max-w-2xl">
         <AnimatePresence mode="wait">
           {submitted ? (

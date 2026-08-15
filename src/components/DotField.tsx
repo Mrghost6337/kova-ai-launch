@@ -58,8 +58,9 @@ const DotField = memo(function DotField({
   className,
   ...rest
 }: DotFieldProps) {
+  void glowRadius;
+  void glowColor;
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const glowRef = useRef<SVGCircleElement>(null);
   const dotsRef = useRef<Dot[]>([]);
   const rafRef = useRef<number | null>(null);
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,7 +76,6 @@ const DotField = memo(function DotField({
     speed: 0,
     inside: false,
   });
-  const glowOpacityRef = useRef(0);
   const engagementRef = useRef(0);
   const propsRef = useRef({
     dotRadius,
@@ -101,8 +101,6 @@ const DotField = memo(function DotField({
     gradientFrom,
     gradientTo,
   };
-
-  const glowIdRef = useRef(`dot-field-glow-${Math.random().toString(36).slice(2, 9)}`);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -223,13 +221,6 @@ const DotField = memo(function DotField({
       engagementRef.current += (targetEngagement - engagementRef.current) * 0.075;
       if (engagementRef.current < 0.001) engagementRef.current = 0;
       const engagement = engagementRef.current;
-
-      glowOpacityRef.current += (engagement - glowOpacityRef.current) * 0.08;
-      if (glowRef.current) {
-        glowRef.current.setAttribute("cx", String(mouse.x));
-        glowRef.current.setAttribute("cy", String(mouse.y));
-        glowRef.current.style.opacity = String(glowOpacityRef.current * 0.7);
-      }
 
       context.clearRect(0, 0, width, height);
 
@@ -366,23 +357,6 @@ const DotField = memo(function DotField({
   return (
     <div className={["dot-field-container", className].filter(Boolean).join(" ")} {...rest}>
       <canvas ref={canvasRef} aria-hidden="true" />
-      <svg aria-hidden="true" className="dot-field-glow">
-        <defs>
-          <radialGradient id={glowIdRef.current}>
-            <stop offset="0%" stopColor={glowColor} />
-            <stop offset="42%" stopColor={glowColor} stopOpacity="0.18" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-        <circle
-          ref={glowRef}
-          cx="-9999"
-          cy="-9999"
-          r={glowRadius}
-          fill={`url(#${glowIdRef.current})`}
-          style={{ opacity: 0, willChange: "opacity" }}
-        />
-      </svg>
     </div>
   );
 });
