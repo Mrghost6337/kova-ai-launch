@@ -8,6 +8,7 @@ import { ConvexReactClient } from "convex/react";
 import { StrictMode, useEffect, lazy, Suspense } from "react";
 import Landing from "./pages/Landing.tsx";
 import ProductDetail from "./pages/ProductDetail.tsx";
+import PricingPage from "./pages/PricingPage.tsx";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import "./index.css";
@@ -67,6 +68,7 @@ createRoot(document.getElementById("root")!).render(
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/app" element={<ProductDetail />} />
+              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/checkout/success" element={<CheckoutSuccess />} />
               <Route
                 path="/auth"

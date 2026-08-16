@@ -2,7 +2,7 @@ import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useAction } from "convex/react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 export type BillingInterval = "month" | "year";
 
@@ -10,6 +10,7 @@ export function useCheckout() {
   const { isAuthenticated } = useAuth();
   const createCheckout = useAction(api.checkout.createCheckout);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +18,7 @@ export function useCheckout() {
     setError(null);
 
     if (!isAuthenticated) {
-      navigate(`/auth?returnTo=${encodeURIComponent("/app")}`);
+      navigate(`/auth?returnTo=${encodeURIComponent(location.pathname)}`);
       return;
     }
 

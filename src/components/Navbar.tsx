@@ -8,7 +8,7 @@ type NavLink = { label: string; href?: string; to?: string };
 
 const links: NavLink[] = [
   { label: "About", href: "#product" },
-  { label: "Pricing", to: "/app#plans" },
+  { label: "Pricing", to: "/pricing" },
   { label: "App", to: "/app" },
 ];
 
@@ -22,6 +22,9 @@ export function Navbar() {
       document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
     } else {
       navigate(`/${href}`);
+      window.setTimeout(() => {
+        document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+      }, 120);
     }
   };
 
@@ -40,8 +43,9 @@ export function Navbar() {
           aria-label="Back to home"
         >
           <KovaLogo className="size-8 shrink-0 rounded-[23%] ring-1 ring-white/15" />
-          <span className="font-serif text-[1.45rem] italic tracking-[-0.06em] sm:text-[1.55rem]">
-            KOVA AI
+          <span className="text-[0.95rem] font-semibold uppercase leading-none tracking-[0.26em]">
+            KOVA
+            <span className="ml-1.5 font-light text-white/55">AI</span>
           </span>
         </button>
 
