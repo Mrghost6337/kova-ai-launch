@@ -29,7 +29,13 @@ function RouteLoading() {
   );
 }
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+const convexUrl = import.meta.env.VITE_CONVEX_URL;
+if (!convexUrl) {
+  throw new Error(
+    "VITE_CONVEX_URL is not set. Add it in Vercel: Project → Settings → Environment Variables.",
+  );
+}
+const convex = new ConvexReactClient(convexUrl);
 
 
 

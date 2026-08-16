@@ -21,6 +21,10 @@ Use bun for the package manager.
 
 This project is set up already and running on a cloud environment, as well as a convex development in the sandbox.
 
+## Deploying to Vercel
+
+To launch the site on Vercel (frontend) with the Convex backend (auth, database, Stripe), follow [`DEPLOYMENT.md`](DEPLOYMENT.md). It covers the required environment variables, custom domain (`kova.ai`), and Stripe webhook setup.
+
 ## Environment Variables
 
 The project is set up with project specific CONVEX_DEPLOYMENT and VITE_CONVEX_URL environment variables on the client side.
