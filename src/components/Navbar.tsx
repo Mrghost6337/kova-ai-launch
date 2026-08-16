@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { KovaLogo } from "./KovaLogo";
 
 type NavLink = { label: string; href?: string; to?: string };
 
@@ -35,10 +36,13 @@ export function Navbar() {
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="font-serif text-[1.45rem] italic tracking-[-0.06em] text-white transition-opacity hover:opacity-70 sm:text-[1.55rem]"
+          className="flex items-center gap-2.5 text-white transition-opacity hover:opacity-70"
           aria-label="Back to home"
         >
-          KOVA AI
+          <KovaLogo className="size-8 shrink-0 rounded-[23%] ring-1 ring-white/15" />
+          <span className="font-serif text-[1.45rem] italic tracking-[-0.06em] sm:text-[1.55rem]">
+            KOVA AI
+          </span>
         </button>
 
         <div className="hidden items-center gap-1 md:flex">

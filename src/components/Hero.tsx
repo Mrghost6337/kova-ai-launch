@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
 import Silk from "./Silk";
+import { KovaLogo } from "./KovaLogo";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -33,7 +34,8 @@ export function Hero() {
       <div className="pointer-events-none absolute left-1/2 top-[27%] z-[2] h-[400px] w-[min(70vw,760px)] -translate-x-1/2 rounded-full bg-white/[0.045] blur-[110px]" />
       <motion.div style={{ y: contentY, opacity: contentOpacity }} className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3, ease }} className="mb-8 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.28em] text-white/48 sm:mb-10">
-          <span className="size-1 rounded-full bg-white/70" /> KOVA AI · Your training, adapted to you <span className="size-1 rounded-full bg-white/30" />
+          <KovaLogo className="size-6 shrink-0 rounded-[23%] ring-1 ring-white/10" />
+          <span>KOVA AI · Your training, adapted to you</span>
         </motion.div>
         <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.85, delay: 0.42, ease }} className="max-w-4xl font-serif text-[clamp(4rem,10vw,8.9rem)] leading-[0.83] tracking-[-0.07em] text-white">
           Train smarter.<br /><em className="text-white/62">Get stronger.</em>
