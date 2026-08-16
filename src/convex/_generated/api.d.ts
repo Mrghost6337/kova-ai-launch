@@ -16,6 +16,7 @@ import type * as plans from "../plans.js";
 import type * as purchases from "../purchases.js";
 import type * as users from "../users.js";
 import type * as waitlist from "../waitlist.js";
+import type * as waitlistEmail from "../waitlistEmail.js";
 import type * as webhooks from "../webhooks.js";
 import type * as webhooksNode from "../webhooksNode.js";
 
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   purchases: typeof purchases;
   users: typeof users;
   waitlist: typeof waitlist;
+  waitlistEmail: typeof waitlistEmail;
   webhooks: typeof webhooks;
   webhooksNode: typeof webhooksNode;
 }>;

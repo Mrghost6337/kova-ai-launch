@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
-export const join = mutation({
+export const add = internalMutation({
   args: {
     email: v.string(),
   },
@@ -14,10 +14,10 @@ export const join = mutation({
       .first();
 
     if (existing) {
-      return { status: "already" };
+      return { status: "already" as const };
     }
 
     await ctx.db.insert("waitlist", { email });
-    return { status: "added" };
+    return { status: "added" as const };
   },
 });
