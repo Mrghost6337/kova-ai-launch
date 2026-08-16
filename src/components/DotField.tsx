@@ -240,7 +240,6 @@ const DotField = memo(function DotField({
 
       const gradient = context.createLinearGradient(0, 0, width, height);
       gradient.addColorStop(0, props.gradientFrom);
-      gradient.addColorStop(0.48, "rgba(255, 255, 255, 0.07)");
       gradient.addColorStop(1, props.gradientTo);
       context.fillStyle = gradient;
       context.beginPath();
@@ -301,7 +300,7 @@ const DotField = memo(function DotField({
         context.arc(drawX, drawY, drawRadius, 0, TWO_PI);
       }
 
-      context.globalAlpha = 0.95;
+      context.globalAlpha = 0.5;
       context.fill();
       context.globalAlpha = 1;
 

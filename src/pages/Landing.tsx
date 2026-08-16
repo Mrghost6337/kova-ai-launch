@@ -17,7 +17,7 @@ export default function Landing() {
           <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.58]">
             <DotField
               dotRadius={5}
-              dotSpacing={20}
+              dotSpacing={26}
               bulgeStrength={67}
               glowRadius={160}
               sparkle={false}
