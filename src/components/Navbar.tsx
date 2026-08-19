@@ -38,8 +38,34 @@ export function Navbar() {
       className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8"
     >
       <nav className="liquid-glass mx-auto flex max-w-5xl items-center justify-between rounded-full border-white/[0.14] bg-white/[0.055] px-3.5 py-2.5 shadow-[0_16px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/[0.03] sm:px-5 sm:py-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="flex shrink-0 items-center gap-2.5 text-white transition-opacity hover:opacity-70"
+          aria-label="Back to home"
+        >
+          <KovaLogo className="size-8 shrink-0 rounded-[23%] ring-1 ring-white/15" />
+          <span className="text-[0.95rem] font-semibold uppercase leading-none tracking-[0.26em]">
+            KOVA
+            <span className="ml-1.5 font-light text-white/55">AI</span>
+          </span>
+        </button>
+
+        <div className="hidden items-center gap-1 md:flex">
+          {links.map((link) => (
+            <button
+              key={link.label}
+              type="button"
+              onClick={() => link.to ? navigate(link.to) : goToSection(link.href ?? "#product")}
+              className="rounded-full px-3 py-2 text-[12px] font-medium tracking-[-0.01em] text-white/62 transition-colors hover:bg-white/[0.07] hover:text-white"
+            >
+              {link.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden items-center gap-0.5 md:flex">
             <a
               href="https://x.com/CheynsEdward"
               target="_blank"
@@ -59,41 +85,14 @@ export function Navbar() {
               <GitHubMark className="size-[16px]" />
             </a>
           </div>
-          <span className="hidden h-5 w-px bg-white/[0.12] sm:block" />
           <button
             type="button"
-            onClick={() => navigate("/")}
-            className="flex shrink-0 items-center gap-2.5 text-white transition-opacity hover:opacity-70"
-            aria-label="Back to home"
+            onClick={() => goToSection("#waitlist")}
+            className="hidden rounded-full bg-white px-4 py-2 text-[12px] font-semibold tracking-[-0.01em] text-black transition-transform hover:scale-[1.03] sm:block"
           >
-            <KovaLogo className="size-8 shrink-0 rounded-[23%] ring-1 ring-white/15" />
-            <span className="text-[0.95rem] font-semibold uppercase leading-none tracking-[0.26em]">
-              KOVA
-              <span className="ml-1.5 font-light text-white/55">AI</span>
-            </span>
+            Join Waitlist
           </button>
         </div>
-
-        <div className="hidden items-center gap-1 md:flex">
-          {links.map((link) => (
-            <button
-              key={link.label}
-              type="button"
-              onClick={() => link.to ? navigate(link.to) : goToSection(link.href ?? "#product")}
-              className="rounded-full px-3 py-2 text-[12px] font-medium tracking-[-0.01em] text-white/62 transition-colors hover:bg-white/[0.07] hover:text-white"
-            >
-              {link.label}
-            </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => goToSection("#waitlist")}
-          className="hidden rounded-full bg-white px-4 py-2 text-[12px] font-semibold tracking-[-0.01em] text-black transition-transform hover:scale-[1.03] sm:block"
-        >
-          Join Waitlist
-        </button>
 
         <button
           type="button"
@@ -139,6 +138,28 @@ export function Navbar() {
             >
               Join Waitlist
             </button>
+            <div className="mt-3 flex items-center gap-1.5 border-t border-white/[0.08] pt-3">
+              <a
+                href="https://x.com/CheynsEdward"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="KOVA AI on X"
+                onClick={() => setIsOpen(false)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
+              >
+                <XMark className="size-4" /> X
+              </a>
+              <a
+                href="https://github.com/Mrghost6337/kova-ai-launch"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="KOVA AI on GitHub"
+                onClick={() => setIsOpen(false)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
+              >
+                <GitHubMark className="size-4" /> GitHub
+              </a>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
