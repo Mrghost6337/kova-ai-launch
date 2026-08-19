@@ -3,13 +3,15 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { KovaLogo } from "./KovaLogo";
+import { GitHubMark, XMark } from "./SocialIcons";
 
 type NavLink = { label: string; href?: string; to?: string };
 
 const links: NavLink[] = [
   { label: "About", href: "#product" },
-  { label: "Pricing", to: "/pricing" },
   { label: "App", to: "/app" },
+  { label: "Pricing", to: "/pricing" },
+  { label: "Team", to: "/team" },
 ];
 
 export function Navbar() {
@@ -36,18 +38,41 @@ export function Navbar() {
       className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8"
     >
       <nav className="liquid-glass mx-auto flex max-w-5xl items-center justify-between rounded-full border-white/[0.14] bg-white/[0.055] px-3.5 py-2.5 shadow-[0_16px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/[0.03] sm:px-5 sm:py-3">
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2.5 text-white transition-opacity hover:opacity-70"
-          aria-label="Back to home"
-        >
-          <KovaLogo className="size-8 shrink-0 rounded-[23%] ring-1 ring-white/15" />
-          <span className="text-[0.95rem] font-semibold uppercase leading-none tracking-[0.26em]">
-            KOVA
-            <span className="ml-1.5 font-light text-white/55">AI</span>
-          </span>
-        </button>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-0.5">
+            <a
+              href="https://x.com/CheynsEdward"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="KOVA AI on X"
+              className="flex size-9 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
+            >
+              <XMark className="size-[15px]" />
+            </a>
+            <a
+              href="https://github.com/Mrghost6337/kova-ai-launch"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="KOVA AI on GitHub"
+              className="flex size-9 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
+            >
+              <GitHubMark className="size-[16px]" />
+            </a>
+          </div>
+          <span className="hidden h-5 w-px bg-white/[0.12] sm:block" />
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex shrink-0 items-center gap-2.5 text-white transition-opacity hover:opacity-70"
+            aria-label="Back to home"
+          >
+            <KovaLogo className="size-8 shrink-0 rounded-[23%] ring-1 ring-white/15" />
+            <span className="text-[0.95rem] font-semibold uppercase leading-none tracking-[0.26em]">
+              KOVA
+              <span className="ml-1.5 font-light text-white/55">AI</span>
+            </span>
+          </button>
+        </div>
 
         <div className="hidden items-center gap-1 md:flex">
           {links.map((link) => (

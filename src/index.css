@@ -258,3 +258,61 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+.legal-prose h2 {
+  margin-top: 2.75rem;
+  margin-bottom: 0.9rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-style: italic;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.legal-prose p {
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.legal-prose ul {
+  margin-top: 1rem;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.legal-prose li {
+  position: relative;
+  padding-left: 1.1rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.legal-prose li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.legal-prose a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.4);
+}
+
+.legal-prose strong {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
