@@ -13,10 +13,12 @@ let cached: PerfInfo | null = null;
  * Detects the device's capability tier once per page load.
  *
  * - "low":  weak CPUs/RAM, or the user prefers reduced motion. Heavy visuals
- *           (full-screen WebGL, animated blurred orbs, dot-field simulation,
- *           scroll parallax) are frozen or simplified so weaker laptops stay
- *           smooth. The layout and look stay the same — only motion is reduced.
- * - "high": full visuals (animated silk, orbs, dot field, parallax).
+ *           run at reduced fidelity (half-resolution WebGL, simplified dot
+ *           field, frozen background orbs and scroll parallax) so weaker
+ *           laptops stay smooth. Nothing is removed — the layout and look stay
+ *           the same, only detail/motion is dialed back.
+ * - "high": full fidelity (full-resolution animated silk, orbs, dot field,
+ *           parallax).
  *
  * The tier never changes during a session, so it can be read as a plain
  * constant anywhere (including for gating hook calls).

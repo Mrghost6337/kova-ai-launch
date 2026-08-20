@@ -148,7 +148,6 @@ const Silk: React.FC<SilkProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
   const perf = getPerf();
-  const lowTier = perf.tier === "low";
 
   useEffect(() => {
     const el = containerRef.current;
@@ -189,7 +188,7 @@ const Silk: React.FC<SilkProps> = ({
     <div ref={containerRef} className="silk-container" aria-hidden="true">
       <Canvas
         dpr={[1, perf.dprCap]}
-        frameloop={lowTier || !inView ? "never" : "always"}
+        frameloop={inView ? "always" : "never"}
       >
         <SilkPlane
           speed={speed}
