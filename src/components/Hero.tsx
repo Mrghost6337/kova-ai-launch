@@ -1,12 +1,10 @@
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
-import { Suspense, lazy, useRef } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router";
 import { getPerf } from "@/lib/perf";
+import Silk from "./Silk";
 import { KovaLogo } from "./KovaLogo";
-
-// WebGL silk is heavy to parse and run — load it only when the hero is shown.
-const Silk = lazy(() => import("./Silk"));
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -26,15 +24,13 @@ export function Hero() {
   return (
     <section ref={heroRef} className="relative flex min-h-[780px] items-center justify-center overflow-hidden px-6 pb-24 pt-36 sm:min-h-[860px] lg:pb-32">
       <motion.div style={lowTier ? { opacity: 0.68 } : { y: backgroundY, scale: backgroundScale, opacity: backgroundOpacity }} className="pointer-events-none absolute inset-0 z-0">
-        <Suspense fallback={null}>
-          <Silk
-            speed={8.9}
-            scale={1.4}
-            color="#7B7481"
-            noiseIntensity={0.6}
-            rotation={0}
-          />
-        </Suspense>
+        <Silk
+          speed={8.9}
+          scale={1.4}
+          color="#7B7481"
+          noiseIntensity={0.6}
+          rotation={0}
+        />
       </motion.div>
       <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-black/10 via-black/20 to-black/75" />
       <div className="pointer-events-none absolute left-1/2 top-[27%] z-[2] h-[400px] w-[min(70vw,760px)] -translate-x-1/2 rounded-full bg-white/[0.045] blur-[110px]" />
@@ -43,7 +39,7 @@ export function Hero() {
           <KovaLogo className="size-6 shrink-0 rounded-[23%] ring-1 ring-white/10" />
           <span>KOVA AI · Your training, adapted to you</span>
         </motion.div>
-        <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.85, delay: 0.42, ease }} className="max-w-4xl font-serif text-[clamp(4rem,10vw,8.9rem)] leading-[0.83] tracking-[-0.07em] text-white">
+        <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.85, delay: 0.42, ease }} className="max-w-4xl font-display text-[clamp(4.2rem,10.5vw,9.4rem)] leading-[0.88] tracking-[-0.05em] text-white">
           Train smarter.<br /><em className="text-white/62">Get stronger.</em>
         </motion.h1>
         <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.64, ease }} className="mt-9 max-w-xl text-sm leading-7 text-white/52 sm:mt-11 sm:text-base">
