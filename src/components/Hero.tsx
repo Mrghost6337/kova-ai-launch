@@ -39,7 +39,7 @@ export function Hero() {
           <KovaLogo className="size-6 shrink-0 rounded-[23%] ring-1 ring-white/10" />
           <span>KOVA AI · Your training, adapted to you</span>
         </motion.div>
-        <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.85, delay: 0.42, ease }} className="max-w-4xl font-display text-[clamp(4.2rem,10.5vw,9.4rem)] leading-[0.88] tracking-[-0.05em] text-white">
+        <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.85, delay: 0.42, ease }} className="max-w-4xl font-display text-[clamp(4.2rem,10.5vw,9.6rem)] leading-[0.9] tracking-[-0.04em] text-white">
           Train smarter.<br /><em className="text-white/62">Get stronger.</em>
         </motion.h1>
         <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.64, ease }} className="mt-9 max-w-xl text-sm leading-7 text-white/52 sm:mt-11 sm:text-base">
