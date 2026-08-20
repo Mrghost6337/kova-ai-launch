@@ -1,6 +1,7 @@
-import React, { useLayoutEffect, useMemo, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type RootState } from "@react-three/fiber";
 import { Color, Mesh, ShaderMaterial, type IUniform } from "three";
+import { getPerf } from "@/lib/perf";
 import "./Silk.css";
 
 type NormalizedRGB = [number, number, number];
@@ -91,7 +92,7 @@ const SilkPlane = function SilkPlane({
   rotation,
 }: SilkPlaneProps) {
   const meshRef = useRef<Mesh>(null);
-  const { viewport } = useThree();
+  const { viewport, invalidate } = useThree();
   const uniforms = useMemo<SilkUniforms>(
     () => ({
       uSpeed: { value: speed },
@@ -106,7 +107,9 @@ const SilkPlane = function SilkPlane({
 
   useLayoutEffect(() => {
     meshRef.current?.scale.set(viewport.width, viewport.height, 1);
-  }, [viewport]);
+    // Draw at least one frame, even when the loop is paused (static mode).
+    invalidate();
+  }, [viewport, invalidate]);
 
   useFrame((_state: RootState, delta: number) => {
     const material = meshRef.current?.material;
@@ -141,18 +144,63 @@ const Silk: React.FC<SilkProps> = ({
   color = "#7B7481",
   noiseIntensity = 1.5,
   rotation = 0,
-}) => (
-  <div className="silk-container" aria-hidden="true">
-    <Canvas dpr={[1, 2]} frameloop="always">
-      <SilkPlane
-        speed={speed}
-        scale={scale}
-        color={color}
-        noiseIntensity={noiseIntensity}
-        rotation={rotation}
-      />
-    </Canvas>
-  </div>
-);
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  const perf = getPerf();
+  const lowTier = perf.tier === "low";
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const isActive = () => {
+      if (document.hidden) return false;
+      const rect = el.getBoundingClientRect();
+      return rect.bottom > 0 && rect.top < window.innerHeight;
+    };
+
+    const onStateChange = () => {
+      setInView((previous) => {
+        const next = isActive();
+        return next === previous ? previous : next;
+      });
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!document.hidden) setInView(entry.isIntersecting);
+      },
+      { rootMargin: "100px 0px" },
+    );
+    io.observe(el);
+
+    document.addEventListener("visibilitychange", onStateChange);
+    window.addEventListener("scroll", onStateChange, { passive: true });
+
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onStateChange);
+      window.removeEventListener("scroll", onStateChange);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="silk-container" aria-hidden="true">
+      <Canvas
+        dpr={[1, perf.dprCap]}
+        frameloop={lowTier || !inView ? "never" : "always"}
+      >
+        <SilkPlane
+          speed={speed}
+          scale={scale}
+          color={color}
+          noiseIntensity={noiseIntensity}
+          rotation={rotation}
+        />
+      </Canvas>
+    </div>
+  );
+};
 
 export default Silk;

@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, type HTMLAttributes } from "react";
+import { getPerf } from "@/lib/perf";
 import "./DotField.css";
 
 const TWO_PI = Math.PI * 2;
@@ -63,6 +64,9 @@ const DotField = memo(function DotField({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dotsRef = useRef<Dot[]>([]);
   const rafRef = useRef<number | null>(null);
+  const pausedRef = useRef(false);
+  const ambientGradientRef = useRef<CanvasGradient | null>(null);
+  const dotGradientRef = useRef<CanvasGradient | null>(null);
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rebuildRef = useRef<(() => void) | null>(null);
   const sizeRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0 });
@@ -110,12 +114,14 @@ const DotField = memo(function DotField({
     const context = canvas.getContext("2d", { alpha: true });
     if (!context) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const perf = getPerf();
+    const lowTier = perf.tier === "low";
+    const dpr = Math.min(window.devicePixelRatio || 1, lowTier ? 1 : 2);
+    const reducedMotion = perf.reducedMotion;
 
     const buildDots = (width: number, height: number) => {
       const props = propsRef.current;
-      const step = Math.max(props.dotRadius * 2 + 2, props.dotSpacing);
+      const step = Math.max(props.dotRadius * 2 + 2, props.dotSpacing) * (lowTier ? 1.6 : 1);
       const columns = Math.ceil(width / step) + 1;
       const rows = Math.ceil(height / step) + 1;
       const padX = (width - (columns - 1) * step) / 2;
@@ -157,6 +163,24 @@ const DotField = memo(function DotField({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const ambient = context.createRadialGradient(
+        width * 0.5,
+        height * 0.38,
+        0,
+        width * 0.5,
+        height * 0.38,
+        Math.max(width, height) * 0.8,
+      );
+      ambient.addColorStop(0, "rgba(255, 255, 255, 0.045)");
+      ambient.addColorStop(0.48, "rgba(255, 255, 255, 0.012)");
+      ambient.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ambientGradientRef.current = ambient;
+
+      const dotGradient = context.createLinearGradient(0, 0, width, height);
+      dotGradient.addColorStop(0, propsRef.current.gradientFrom);
+      dotGradient.addColorStop(1, propsRef.current.gradientTo);
+      dotGradientRef.current = dotGradient;
 
       sizeRef.current = {
         w: width,
@@ -207,6 +231,10 @@ const DotField = memo(function DotField({
     let frameCount = 0;
 
     const tick = () => {
+      if (pausedRef.current) {
+        rafRef.current = null;
+        return;
+      }
       frameCount += 1;
       const dots = dotsRef.current;
       const mouse = mouseRef.current;
@@ -224,24 +252,12 @@ const DotField = memo(function DotField({
 
       context.clearRect(0, 0, width, height);
 
-      const ambient = context.createRadialGradient(
-        width * 0.5,
-        height * 0.38,
-        0,
-        width * 0.5,
-        height * 0.38,
-        Math.max(width, height) * 0.8,
-      );
-      ambient.addColorStop(0, "rgba(255, 255, 255, 0.045)");
-      ambient.addColorStop(0.48, "rgba(255, 255, 255, 0.012)");
-      ambient.addColorStop(1, "rgba(0, 0, 0, 0)");
-      context.fillStyle = ambient;
-      context.fillRect(0, 0, width, height);
+      if (ambientGradientRef.current) {
+        context.fillStyle = ambientGradientRef.current;
+        context.fillRect(0, 0, width, height);
+      }
 
-      const gradient = context.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, props.gradientFrom);
-      gradient.addColorStop(1, props.gradientTo);
-      context.fillStyle = gradient;
+      context.fillStyle = dotGradientRef.current ?? "#ffffff";
       context.beginPath();
 
       const cursorRadiusSquared = props.cursorRadius * props.cursorRadius;
@@ -304,6 +320,7 @@ const DotField = memo(function DotField({
       context.fill();
       context.globalAlpha = 1;
 
+      if (!lowTier) {
       context.beginPath();
       for (let index = 0; index < dots.length; index += 29) {
         const dot = dots[index];
@@ -322,6 +339,7 @@ const DotField = memo(function DotField({
       context.fill();
       context.globalAlpha = 1;
       context.globalCompositeOperation = "source-over";
+      }
 
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -332,19 +350,52 @@ const DotField = memo(function DotField({
       if (w > 0 && h > 0) buildDots(w, h);
     };
 
-    const resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resizeCanvas) : null;
+    const pauseLoop = () => {
+      pausedRef.current = true;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    const resumeLoop = () => {
+      pausedRef.current = false;
+      if (rafRef.current === null) rafRef.current = requestAnimationFrame(tick);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) pauseLoop();
+      else resumeLoop();
+    };
+
+    const intersectionObserver =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => {
+              if (entry.isIntersecting && !document.hidden) resumeLoop();
+              else pauseLoop();
+            },
+            { rootMargin: "150px" },
+          )
+        : null;
+    intersectionObserver?.observe(canvas);
+
+    const resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => scheduleResize()) : null;
     resizeObserver?.observe(parent);
     window.addEventListener("resize", scheduleResize);
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       window.clearInterval(speedInterval);
       if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
+      intersectionObserver?.disconnect();
       resizeObserver?.disconnect();
       window.removeEventListener("resize", scheduleResize);
       window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       rebuildRef.current = null;
     };
   }, []);

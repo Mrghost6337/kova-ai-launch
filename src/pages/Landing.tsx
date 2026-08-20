@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { getPerf } from "@/lib/perf";
 import { KovaBackground } from "@/components/KovaBackground";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
@@ -7,6 +8,7 @@ import { Waitlist } from "@/components/Waitlist";
 import DotField from "@/components/DotField";
 
 export default function Landing() {
+  const lowTier = getPerf().tier === "low";
   return (
     <main id="top" className="relative isolate min-h-screen overflow-hidden bg-black text-white">
       <KovaBackground />
@@ -33,13 +35,13 @@ export default function Landing() {
           <motion.div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-[46%] z-[2] h-[min(88vw,940px)] w-[min(88vw,940px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.045]"
-            animate={{ rotate: [0, 5, -3, 0], scale: [1, 1.018, 0.99, 1] }}
+            animate={lowTier ? undefined : { rotate: [0, 5, -3, 0], scale: [1, 1.018, 0.99, 1] }}
             transition={{ duration: 34, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-[56%] z-[2] h-[min(55vw,580px)] w-[min(55vw,580px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.035]"
-            animate={{ rotate: [0, -7, 4, 0], scale: [1, 0.985, 1.02, 1] }}
+            animate={lowTier ? undefined : { rotate: [0, -7, 4, 0], scale: [1, 0.985, 1.02, 1] }}
             transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
           />
 
