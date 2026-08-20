@@ -8,7 +8,7 @@ import { GitHubMark, XMark } from "./SocialIcons";
 type NavLink = { label: string; href?: string; to?: string };
 
 const links: NavLink[] = [
-  { label: "About", href: "#product" },
+  { label: "About", to: "/about" },
   { label: "App", to: "/app" },
   { label: "Pricing", to: "/pricing" },
   { label: "Team", to: "/team" },

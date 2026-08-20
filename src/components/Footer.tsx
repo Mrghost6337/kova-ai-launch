@@ -1,8 +1,8 @@
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { GitHubMark, XMark } from "./SocialIcons";
 
 const footerLinks = [
-  { label: "About", href: "#product" },
+  { label: "About", to: "/about" },
   { label: "App", to: "/app" },
   { label: "Pricing", to: "/pricing" },
   { label: "Team", to: "/team" },
@@ -11,13 +11,6 @@ const footerLinks = [
 ];
 
 export function Footer() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const goToSection = (href: string) => {
-    if (location.pathname === "/") document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-    else navigate(`/${href}`);
-  };
-
   return (
     <footer className="border-t border-white/[0.1] px-6 pb-8 pt-10">
       <div className="mx-auto max-w-6xl">
@@ -61,14 +54,12 @@ export function Footer() {
                   {link.label}
                 </Link>
               ) : (
-                <button
+                <span
                   key={link.label}
-                  type="button"
-                  onClick={() => link.href && goToSection(link.href)}
-                  className="text-left text-[10px] font-medium uppercase tracking-[0.16em] text-white/40 transition-colors hover:text-white"
+                  className="text-left text-[10px] font-medium uppercase tracking-[0.16em] text-white/40"
                 >
                   {link.label}
-                </button>
+                </span>
               )
             )}
             <a

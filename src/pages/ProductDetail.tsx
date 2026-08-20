@@ -96,7 +96,7 @@ export default function ProductDetail() {
                   </Link>
                 </div>
                 <p className="mt-5 text-[10px] uppercase tracking-[0.16em] text-white/30">
-                  For intermediate lifters · Coming soon to iOS
+                  For beginners and lifters · Coming soon to iOS
                 </p>
               </motion.div>
             </div>

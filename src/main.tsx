@@ -20,6 +20,7 @@ const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const About = lazy(() => import("./pages/About.tsx"));
 const Team = lazy(() => import("./pages/Team.tsx"));
 const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Terms = lazy(() => import("./pages/Terms.tsx"));
@@ -79,8 +80,9 @@ createRoot(document.getElementById("root")!).render(
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/app" element={<ProductDetail />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/team" element={<Team />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/team" element={<Team />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/checkout/success" element={<CheckoutSuccess />} />
