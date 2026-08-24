@@ -4,13 +4,24 @@ import { KovaBackground } from "@/components/KovaBackground";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { ProductIntro } from "@/components/ProductIntro";
+import { HowItWorks } from "@/components/HowItWorks";
+import { Features } from "@/components/Features";
+import { Security } from "@/components/Security";
+import { FAQ } from "@/components/FAQ";
+import { FinalCTA } from "@/components/FinalCTA";
 import { Waitlist } from "@/components/Waitlist";
+import { Seo } from "@/components/Seo";
 import DotField from "@/components/DotField";
 
 export default function Landing() {
   const lowTier = getPerf().tier === "low";
   return (
     <main id="top" className="relative isolate min-h-screen overflow-hidden bg-black text-white">
+      <Seo
+        title="KOVA AI — Adaptive AI Strength Training for iPhone"
+        description="KOVA builds your workout, guides every set, and adapts your plan as you progress. Built for beginners and lifters."
+        path="/"
+      />
       <KovaBackground />
       <Navbar />
       <div className="relative z-10">
@@ -47,9 +58,14 @@ export default function Landing() {
 
           <div className="relative z-10">
             <ProductIntro />
-            <Waitlist />
+            <HowItWorks />
+            <Features />
           </div>
         </div>
+        <Security />
+        <FAQ />
+        <FinalCTA />
+        <Waitlist />
       </div>
     </main>
   );

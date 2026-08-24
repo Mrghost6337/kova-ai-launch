@@ -2,11 +2,17 @@ import { KovaBackground } from "@/components/KovaBackground";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Pricing } from "@/components/Pricing";
+import { Seo } from "@/components/Seo";
 import { motion } from "framer-motion";
 
 export default function PricingPage() {
   return (
     <main className="relative isolate min-h-screen overflow-hidden bg-black text-white">
+      <Seo
+        title="Pricing — KOVA AI"
+        description="Simple monthly and annual plans for your adaptive strength coach. Cancel anytime."
+        path="/pricing"
+      />
       <KovaBackground />
       <Navbar />
       <div className="relative z-10">

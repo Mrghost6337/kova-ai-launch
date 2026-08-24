@@ -2,6 +2,7 @@ import { KovaBackground } from "@/components/KovaBackground";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import Silk from "@/components/Silk";
+import { Seo } from "@/components/Seo";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router";
@@ -39,6 +40,11 @@ function ScreenshotCard({ src, alt, label, className = "" }: { src: string; alt:
 export default function ProductDetail() {
   return (
     <main className="relative isolate min-h-screen overflow-hidden bg-black text-white">
+      <Seo
+        title="KOVA AI App — Adaptive Strength Coaching for iPhone"
+        description="A clear plan, guided sessions, fast logging and coaching that adapts as you progress. Coming soon to iOS."
+        path="/app"
+      />
       <KovaBackground />
       <Navbar />
       <div className="relative z-10">
