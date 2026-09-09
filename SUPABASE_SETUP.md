@@ -21,8 +21,8 @@ In **Authentication → Providers**:
 
 In **Authentication → URL Configuration**, set:
 
-- Site URL: `https://www.kovaai.dev` (or the real production domain)
-- Redirect URL: `https://www.kovaai.dev/dashboard`
+- Site URL: `https://kovaai.dev`
+- Redirect URL: `https://kovaai.dev/dashboard`
 - Local redirect URL while developing: `http://localhost:5173/dashboard`
 
 ## 3. Create tables and security policies
@@ -68,3 +68,7 @@ Available now:
 - Lazy exercise catalog search with remote demonstrations
 
 The app intentionally does not invent gyms, opening hours, workout history, nutrition targets, progress, payment state or AI-generated plans. Those require their provider/API configuration and backend workflows to be connected first.
+
+## Production values confirmed
+
+The production Supabase project is `https://qcqcteefhpwgwoniqvpm.supabase.co` and the production web origin is `https://kovaai.dev`. Keep the publishable/anon key only in Vercel's `VITE_SUPABASE_ANON_KEY` variable; never commit it to the repository. Google OAuth's provider credentials stay in Supabase, while Google's authorized callback is `https://qcqcteefhpwgwoniqvpm.supabase.co/auth/v1/callback`.

@@ -87,7 +87,7 @@ export function Navbar() {
           </div>
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/auth?returnTo=%2Fdashboard")}
             className="hidden rounded-full bg-white px-4 py-2 text-[12px] font-semibold tracking-[-0.01em] text-black transition-transform hover:scale-[1.03] sm:block"
           >
             Open App
@@ -132,7 +132,7 @@ export function Navbar() {
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                navigate("/dashboard");
+                navigate("/auth?returnTo=%2Fdashboard");
               }}
               className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black"
             >
