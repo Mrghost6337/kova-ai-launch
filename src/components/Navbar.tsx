@@ -87,10 +87,10 @@ export function Navbar() {
           </div>
           <button
             type="button"
-            onClick={() => goToSection("#waitlist")}
+            onClick={() => navigate("/dashboard")}
             className="hidden rounded-full bg-white px-4 py-2 text-[12px] font-semibold tracking-[-0.01em] text-black transition-transform hover:scale-[1.03] sm:block"
           >
-            Join Waitlist
+            Open App
           </button>
         </div>
 
@@ -132,11 +132,11 @@ export function Navbar() {
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                goToSection("#waitlist");
+                navigate("/dashboard");
               }}
               className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black"
             >
-              Join Waitlist
+              Open App
             </button>
             <div className="mt-3 flex items-center gap-1.5 border-t border-white/[0.08] pt-3">
               <a

@@ -1,6 +1,11 @@
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
+import AppDashboard from "./pages/AppDashboard.tsx";
+import Plan from "./pages/Plan.tsx";
+import PlanDetail from "./pages/PlanDetail.tsx";
+import { Food, Progress, Profile, Settings, Upgrade } from "./pages/AppSections.tsx";
+import ExerciseLibrary from "./pages/ExerciseLibrary.tsx";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { InstrumentationProvider } from "@/instrumentation.tsx";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
@@ -94,10 +99,18 @@ createRoot(document.getElementById("root")!).render(
                   path="/dashboard"
                   element={
                     <RequireAuth>
-                      <Dashboard />
+                      <AppDashboard />
                     </RequireAuth>
                   }
                 />
+                <Route path="/dashboard/plan" element={<RequireAuth><Plan /></RequireAuth>} />
+                <Route path="/dashboard/plan/:id" element={<RequireAuth><PlanDetail /></RequireAuth>} />
+                <Route path="/dashboard/food" element={<RequireAuth><Food /></RequireAuth>} />
+                <Route path="/dashboard/exercises" element={<RequireAuth><ExerciseLibrary /></RequireAuth>} />
+                <Route path="/dashboard/progress" element={<RequireAuth><Progress /></RequireAuth>} />
+                <Route path="/dashboard/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+                <Route path="/dashboard/settings" element={<RequireAuth><Settings /></RequireAuth>} />
+                <Route path="/dashboard/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

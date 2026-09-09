@@ -23,7 +23,7 @@ This project is set up already and running on a cloud environment, as well as a 
 
 ## Deploying to Vercel
 
-To launch the site on Vercel (frontend) with the Convex backend (auth, database, Stripe), follow [`DEPLOYMENT.md`](DEPLOYMENT.md). It covers the required environment variables, custom domain (`kova.ai`), and Stripe webhook setup.
+To launch the site on Vercel, follow [`DEPLOYMENT.md`](DEPLOYMENT.md). The public waitlist and existing Stripe backend use Convex, while the KOVA web app uses Supabase for real authentication and app data. Follow [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) for Auth, Google OAuth, SQL/RLS, and Vercel environment variables.
 
 ## Environment Variables
 
