@@ -40,7 +40,7 @@ The migration creates:
 
 Do not disable RLS. Public profile visibility is deliberately limited to rows where `profiles.is_public = true`.
 
-The latest [`supabase/schema.sql`](supabase/schema.sql) also includes the social layer (`follows`, `workout_sessions`, `session_likes`, `direct_messages`) and plan sharing (`plans.is_public` plus public-read policies on `plans`, `plan_days` and `plan_exercises`). Rerunning the whole file is safe — every statement is idempotent. If you already ran an older version, run the file once more (or just the final "Plan sharing" block) so the Share button works.
+The latest [`supabase/schema.sql`](supabase/schema.sql) also includes the social layer (`follows`, `workout_sessions`, `session_likes`, `direct_messages`), plan sharing (`plans.is_public` plus public-read policies on `plans`, `plan_days` and `plan_exercises`) and the gym columns (`profiles.gym_name`, `gym_lat`, `gym_lng`) used by the live-map gym picker. Rerunning the whole file is safe — every statement is idempotent. If you already ran an older version, run the file once more (or just the missing blocks: "Plan sharing" and the gym columns) so Share and the gym picker work.
 
 ## 4. Add Vercel environment variables
 

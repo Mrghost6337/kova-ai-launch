@@ -13,6 +13,9 @@ export type Database = {
           fitness_goal: string | null;
           training_level: string | null;
           is_public: boolean;
+          gym_name: string | null;
+          gym_lat: number | null;
+          gym_lng: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -25,6 +28,9 @@ export type Database = {
           fitness_goal?: string | null;
           training_level?: string | null;
           is_public?: boolean;
+          gym_name?: string | null;
+          gym_lat?: number | null;
+          gym_lng?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -36,6 +42,9 @@ export type Database = {
           fitness_goal?: string | null;
           training_level?: string | null;
           is_public?: boolean;
+          gym_name?: string | null;
+          gym_lat?: number | null;
+          gym_lng?: number | null;
           updated_at?: string;
         };
         Relationships: [];

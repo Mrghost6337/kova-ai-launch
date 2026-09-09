@@ -7,14 +7,18 @@ import {
   ExternalLink,
   Loader2,
   Lock,
+  MapPin,
   Monitor,
   Moon,
+  Navigation,
   Save,
   Sun,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import { Link } from "react-router";
 import { AppShell } from "@/components/AppShell";
+import { GymMapPicker, type GymLocation } from "@/components/GymMapPicker";
 import { Seo } from "@/components/Seo";
 import { useKovaProfile } from "@/hooks/use-kova-app";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
@@ -148,6 +152,36 @@ export function Settings() {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [gym, setGym] = useState<GymLocation | null>(null);
+  const [savingGym, setSavingGym] = useState(false);
+  const [gymSaved, setGymSaved] = useState(false);
+  const [gymError, setGymError] = useState("");
+
+  useEffect(() => {
+    if (!profile) return;
+    setGym(profile.gym_name && profile.gym_lat != null && profile.gym_lng != null ? { name: profile.gym_name, lat: profile.gym_lat, lng: profile.gym_lng } : null);
+  }, [profile]);
+
+  const saveGym = async (location: GymLocation) => {
+    setSavingGym(true); setGymError("");
+    try {
+      await update({ gym_name: location.name, gym_lat: location.lat, gym_lng: location.lng });
+      setGym(location); setGymSaved(true);
+      window.setTimeout(() => setGymSaved(false), 2500);
+    } catch (cause) {
+      setGymError(cause instanceof Error ? cause.message : "Could not save your gym.");
+    } finally { setSavingGym(false); }
+  };
+
+  const removeGym = async () => {
+    setSavingGym(true); setGymError("");
+    try {
+      await update({ gym_name: null, gym_lat: null, gym_lng: null });
+      setGym(null); setGymSaved(false);
+    } catch (cause) {
+      setGymError(cause instanceof Error ? cause.message : "Could not remove your gym.");
+    } finally { setSavingGym(false); }
+  };
 
   const changeNotifications = (value: boolean) => { setNotifications(value); localStorage.setItem("kova-notifications", value ? "on" : "off"); };
   const changeReminders = (value: boolean) => { setReminders(value); localStorage.setItem("kova-reminders", value ? "on" : "off"); };
@@ -196,6 +230,26 @@ export function Settings() {
       </Section>
       <Section icon={Lock} title="Privacy" description="Control whether your profile can be discovered by others.">
         <ToggleRow label="Public profile" description="Let athletes search for you, follow you and see your shared plans and sessions." checked={profile?.is_public ?? false} onChange={(value) => void updatePrivacy(value)} />
+      </Section>
+      <Section icon={MapPin} title="Gym" description="Pick the gym you train at. The live map finds real gyms near you — search, drop a pin or use your location.">
+        {gym && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-kova-emerald/10 text-kova-emerald"><MapPin className="size-4" /></span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-white/80">{gym.name}</p>
+                <p className="mt-0.5 text-xs text-white/35">{gym.lat.toFixed(5)}, {gym.lng.toFixed(5)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${gym.lat},${gym.lng}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 px-3.5 text-xs text-white/70 hover:bg-white/[0.06]">Directions <Navigation className="size-3" /></a>
+              <button type="button" onClick={() => void removeGym()} disabled={savingGym} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 px-3.5 text-xs text-white/50 hover:bg-white/[0.06] disabled:opacity-50"><Trash2 className="size-3" />Remove</button>
+            </div>
+          </div>
+        )}
+        <GymMapPicker value={gym} onChange={(location) => void saveGym(location)} saving={savingGym} />
+        {gymSaved && <p className="mt-3 flex items-center gap-2 text-sm text-white/60"><Check className="size-4" />Gym saved.</p>}
+        {gymError && <p className="mt-3 text-sm text-red-200">{gymError}</p>}
       </Section>
       <Section icon={Lock} title="Security" description="Change your password for this KOVA account.">
         <form onSubmit={updatePassword} className="flex flex-col gap-3 sm:flex-row">

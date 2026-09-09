@@ -326,6 +326,40 @@ input:focus-visible {
   }
 }
 
+/* Leaflet map theming inside the app shell (dark by default, flips in .light). */
+.leaflet-container {
+  background: #0a0a0a;
+  font-family: var(--font-sans);
+}
+.light .leaflet-container {
+  background: #e8e8e4;
+}
+.leaflet-control-zoom a {
+  background: rgba(15, 15, 15, 0.85) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+.light .leaflet-control-zoom a {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #101013 !important;
+  border-color: rgba(12, 12, 15, 0.12) !important;
+}
+.leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.55) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  font-size: 9px !important;
+}
+.leaflet-control-attribution a {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.light .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.65) !important;
+  color: rgba(12, 12, 15, 0.5) !important;
+}
+.light .leaflet-control-attribution a {
+  color: rgba(12, 12, 15, 0.6) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

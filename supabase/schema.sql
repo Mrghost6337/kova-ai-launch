@@ -3,6 +3,12 @@
 
 create extension if not exists pgcrypto;
 
+-- Gym selection: the live map gym picker stores the athlete's gym on the profile.
+-- Safe to rerun; new columns are simply added if missing.
+alter table public.profiles add column if not exists gym_name text;
+alter table public.profiles add column if not exists gym_lat double precision;
+alter table public.profiles add column if not exists gym_lng double precision;
+
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text unique,

@@ -7,6 +7,8 @@ import {
   Clock3,
   Dumbbell,
   Flame,
+  MapPin,
+  Navigation,
   Plus,
   Search,
   Sparkles,
@@ -248,7 +250,7 @@ export default function AppDashboard() {
               </motion.section>
             </div>
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="liquid-glass rounded-[1.5rem] p-5 sm:p-6">
                 <div className="flex items-center gap-2.5"><Sparkles className="size-4 text-kova-amber" /><Label>Next best action</Label></div>
                 <p className="mt-4 text-sm leading-6 text-white/55">{todaysWorkout ? "Follow today's workout and log each set as you go. Small, consistent inputs make KOVA smarter." : "Add a workout day to your plan so your dashboard can tell you exactly what to do next."}</p>
@@ -257,6 +259,24 @@ export default function AppDashboard() {
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44 }} className="liquid-glass rounded-[1.5rem] p-5 sm:p-6">
                 <div className="flex items-center gap-2.5"><Utensils className="size-4 text-white/50" /><Label>Nutrition</Label></div>
                 <p className="mt-4 text-sm leading-6 text-white/45">No nutrition targets yet. Set calorie and protein goals in the Food tab when you are ready.</p>
+              </motion.section>
+              <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }} className="liquid-glass rounded-[1.5rem] border-kova-emerald/15 bg-kova-emerald/[0.035] p-5 sm:p-6">
+                <div className="flex items-center gap-2.5"><MapPin className="size-4 text-kova-emerald" /><Label>Your gym</Label></div>
+                {profile?.gym_name && profile.gym_lat != null && profile.gym_lng != null ? (
+                  <>
+                    <h2 className="mt-4 truncate font-serif text-2xl italic tracking-[-0.03em]">{profile.gym_name}</h2>
+                    <p className="mt-2 text-xs text-white/40">Your training home base.</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${profile.gym_lat},${profile.gym_lng}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold uppercase tracking-[0.1em] text-black"><Navigation className="size-3.5" />Directions</a>
+                      <Link to="/dashboard/settings" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 px-4 text-xs font-medium text-white/70 hover:bg-white/[0.06]">Change</Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-4 text-sm leading-6 text-white/45">No gym selected yet. Pick your gym on the live map so KOVA knows where you train.</p>
+                    <Link to="/dashboard/settings" className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white">Set your gym <ArrowRight className="size-4" /></Link>
+                  </>
+                )}
               </motion.section>
             </div>
           </>
