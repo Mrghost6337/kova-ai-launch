@@ -121,6 +121,53 @@ export function useFollows(userId: string | undefined) {
   return { following, isLoading, reload: load, toggleFollow };
 }
 
+/** The profiles the signed-in person follows (friends), most recently followed first.
+ *  Only profiles the viewer is allowed to see (public ones) are returned. */
+export function useFriends(userId: string | undefined) {
+  const [friends, setFriends] = useState<Profile[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(userId));
+
+  const load = useCallback(async () => {
+    if (!supabase || !userId) {
+      setFriends([]);
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    const followResult = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", userId)
+      .order("created_at", { ascending: false });
+    if (followResult.error) {
+      setFriends([]);
+      setIsLoading(false);
+      return;
+    }
+    const ids = (followResult.data ?? []).map((row) => row.following_id);
+    if (!ids.length) {
+      setFriends([]);
+      setIsLoading(false);
+      return;
+    }
+    const profileResult = await supabase.from("profiles").select("*").in("id", ids);
+    if (profileResult.error) {
+      setFriends([]);
+      setIsLoading(false);
+      return;
+    }
+    const byId = new Map((profileResult.data ?? []).map((profile) => [profile.id, profile]));
+    setFriends(ids.map((id) => byId.get(id)).filter((profile): profile is Profile => Boolean(profile)));
+    setIsLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return { friends, isLoading, reload: load };
+}
+
 /** Count of followers / followings for one profile. */
 export function useFollowerStats(profileId: string | undefined) {
   const [followers, setFollowers] = useState(0);

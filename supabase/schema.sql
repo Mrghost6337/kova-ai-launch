@@ -8,6 +8,9 @@ create extension if not exists pgcrypto;
 alter table public.profiles add column if not exists gym_name text;
 alter table public.profiles add column if not exists gym_lat double precision;
 alter table public.profiles add column if not exists gym_lng double precision;
+alter table public.profiles add column if not exists gym_osm_type text;
+alter table public.profiles add column if not exists gym_osm_id bigint;
+alter table public.profiles add column if not exists gym_opening_hours text;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,

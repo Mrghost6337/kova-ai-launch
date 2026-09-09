@@ -159,13 +159,29 @@ export function Settings() {
 
   useEffect(() => {
     if (!profile) return;
-    setGym(profile.gym_name && profile.gym_lat != null && profile.gym_lng != null ? { name: profile.gym_name, lat: profile.gym_lat, lng: profile.gym_lng } : null);
+    setGym(profile.gym_name && profile.gym_lat != null && profile.gym_lng != null
+      ? {
+          name: profile.gym_name,
+          lat: profile.gym_lat,
+          lng: profile.gym_lng,
+          osmType: (profile.gym_osm_type as GymLocation["osmType"]) ?? undefined,
+          osmId: profile.gym_osm_id ?? undefined,
+          openingHours: profile.gym_opening_hours ?? null,
+        }
+      : null);
   }, [profile]);
 
   const saveGym = async (location: GymLocation) => {
     setSavingGym(true); setGymError("");
     try {
-      await update({ gym_name: location.name, gym_lat: location.lat, gym_lng: location.lng });
+      await update({
+        gym_name: location.name,
+        gym_lat: location.lat,
+        gym_lng: location.lng,
+        gym_osm_type: location.osmType ?? null,
+        gym_osm_id: location.osmId ?? null,
+        gym_opening_hours: location.openingHours ?? null,
+      });
       setGym(location); setGymSaved(true);
       window.setTimeout(() => setGymSaved(false), 2500);
     } catch (cause) {
@@ -176,7 +192,7 @@ export function Settings() {
   const removeGym = async () => {
     setSavingGym(true); setGymError("");
     try {
-      await update({ gym_name: null, gym_lat: null, gym_lng: null });
+      await update({ gym_name: null, gym_lat: null, gym_lng: null, gym_osm_type: null, gym_osm_id: null, gym_opening_hours: null });
       setGym(null); setGymSaved(false);
     } catch (cause) {
       setGymError(cause instanceof Error ? cause.message : "Could not remove your gym.");

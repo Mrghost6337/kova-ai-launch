@@ -18,12 +18,13 @@ import {
   Utensils,
   Waves,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Seo } from "@/components/Seo";
-import { usePublicProfiles, useFollows } from "@/hooks/use-social";
+import { useFriends, usePublicProfiles, useFollows } from "@/hooks/use-social";
+import { gymStatus } from "@/lib/opening-hours";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { useCompletedSets, useKovaPlanDays, useKovaPlans, useKovaProfile } from "@/hooks/use-kova-app";
 
@@ -65,6 +66,17 @@ export default function AppDashboard() {
   const { results: athletes, isLoading: athletesLoading, error: athletesError } = usePublicProfiles(user?.id, searchQuery);
   const { following, toggleFollow } = useFollows(user?.id);
   const [followBusy, setFollowBusy] = useState<string | null>(null);
+  const [showAllFriends, setShowAllFriends] = useState(false);
+  const { friends, isLoading: friendsLoading } = useFriends(user?.id);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const gymInfo = useMemo(
+    () => (profile?.gym_opening_hours ? gymStatus(profile.gym_opening_hours, now) : { state: "unknown" as const, statusLabel: "Hours unknown", hoursToday: null, nextChange: null }),
+    [profile?.gym_opening_hours, now],
+  );
 
   const follow = async (targetId: string) => {
     setFollowBusy(targetId);
@@ -200,27 +212,56 @@ export default function AppDashboard() {
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }} className="liquid-glass rounded-[1.5rem] p-5 sm:p-6 lg:col-span-2">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                   <div>
-                    <div className="flex items-center gap-2.5"><Users className="size-4 text-kova-sky" /><Label>Find athletes</Label></div>
-                    <h2 className="mt-3 font-serif text-3xl italic tracking-[-0.04em]">Train together.</h2>
+                    <div className="flex items-center gap-2.5"><Users className="size-4 text-kova-sky" /><Label>Friends</Label></div>
+                    <h2 className="mt-3 font-serif text-3xl italic tracking-[-0.04em]">Your training circle.</h2>
                   </div>
                   {profile?.is_public && profile.username && (
                     <Link to={`/u/${encodeURIComponent(profile.username)}`} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.12em] text-white/45 hover:text-white">My public profile <ArrowRight className="size-3" /></Link>
                   )}
                 </div>
+
+                {friendsLoading ? (
+                  <div className="mt-5 flex items-center gap-3 text-sm text-white/40"><span className="size-4 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />Loading friends…</div>
+                ) : friends.length ? (
+                  <>
+                    <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                      {friends.slice(0, showAllFriends ? undefined : 3).map((friend) => (
+                        <Link key={friend.id} to={`/u/${encodeURIComponent(friend.username || friend.id)}`} className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3 transition-colors hover:border-white/20 hover:bg-white/[0.05]">
+                          {friend.avatar_url ? (
+                            <img src={friend.avatar_url} alt="" className="size-10 rounded-full border border-white/15 object-cover" />
+                          ) : (
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-kova-sky/15 text-xs font-semibold text-kova-sky">{initials(friend.display_name || friend.username || "K")}</span>
+                          )}
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm text-white/85">{friend.display_name || friend.username || "Athlete"}</span>
+                            <span className="block truncate text-xs text-white/35">@{friend.username || "—"}</span>
+                          </span>
+                          <ChevronRight className="ml-auto size-4 shrink-0 text-white/25 transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                      ))}
+                    </div>
+                    {friends.length > 3 && (
+                      <button type="button" onClick={() => setShowAllFriends((current) => !current)} className="mt-4 text-xs font-medium uppercase tracking-[0.12em] text-white/45 hover:text-white">{showAllFriends ? "Show less" : `Show all ${friends.length} friends`}</button>
+                    )}
+                  </>
+                ) : (
+                  <p className="mt-5 text-sm leading-6 text-white/45">No friends yet. Follow athletes below — their name and profile will show up here.</p>
+                )}
+
                 <label className="relative mt-5 block">
                   <Search className="absolute left-4 top-3.5 size-4 text-white/35" />
                   <input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search by name or @username"
+                    placeholder="Find athletes by name or @username"
                     className="h-11 w-full rounded-full border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/30"
                   />
                 </label>
                 {athletesError && <p className="mt-4 text-xs text-red-200">{athletesError}</p>}
                 {searchQuery.trim() && !athletesLoading && !athletes.length && !athletesError ? (
-                  <p className="mt-5 text-sm text-white/40">No public athletes match “{searchQuery.trim()}”. Make your own profile public in Settings to be found.</p>
+                  <p className="mt-4 text-sm text-white/40">No public athletes match “{searchQuery.trim()}”. Make your own profile public in Settings to be found.</p>
                 ) : athletes.length ? (
-                  <div className="mt-5 space-y-2">
+                  <div className="mt-4 space-y-2">
                     {athletes.map((athlete) => (
                       <div key={athlete.id} className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3">
                         {athlete.avatar_url ? (
@@ -245,7 +286,7 @@ export default function AppDashboard() {
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-5 text-sm leading-6 text-white/35">Search public athletes, follow their training and browse their shared plans and sessions. Your profile stays private until you open it up in Settings.</p>
+                  <p className="mt-4 text-sm leading-6 text-white/35">Follow athletes to grow your circle — their shared plans and sessions become visible here.</p>
                 )}
               </motion.section>
             </div>
@@ -265,7 +306,14 @@ export default function AppDashboard() {
                 {profile?.gym_name && profile.gym_lat != null && profile.gym_lng != null ? (
                   <>
                     <h2 className="mt-4 truncate font-serif text-2xl italic tracking-[-0.03em]">{profile.gym_name}</h2>
-                    <p className="mt-2 text-xs text-white/40">Your training home base.</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${gymInfo.state === "open" ? "border-kova-emerald/30 bg-kova-emerald/10 text-kova-emerald" : gymInfo.state === "closed" ? "border-kova-rose/30 bg-kova-rose/10 text-kova-rose" : "border-white/10 bg-white/[0.04] text-white/45"}`}>
+                        <span className={`size-1.5 rounded-full ${gymInfo.state === "open" ? "bg-kova-emerald" : gymInfo.state === "closed" ? "bg-kova-rose" : "bg-white/40"}`} />
+                        {gymInfo.statusLabel}
+                      </span>
+                      {gymInfo.nextChange && <span className="text-[11px] text-white/40">{gymInfo.nextChange}</span>}
+                    </div>
+                    {gymInfo.hoursToday && <p className="mt-2 text-xs text-white/40">Today · {gymInfo.hoursToday}</p>}
                     <div className="mt-5 flex flex-wrap gap-2">
                       <a href={`https://www.google.com/maps/dir/?api=1&destination=${profile.gym_lat},${profile.gym_lng}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold uppercase tracking-[0.1em] text-black"><Navigation className="size-3.5" />Directions</a>
                       <Link to="/dashboard/settings" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 px-4 text-xs font-medium text-white/70 hover:bg-white/[0.06]">Change</Link>

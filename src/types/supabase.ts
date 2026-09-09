@@ -16,6 +16,9 @@ export type Database = {
           gym_name: string | null;
           gym_lat: number | null;
           gym_lng: number | null;
+          gym_osm_type: string | null;
+          gym_osm_id: number | null;
+          gym_opening_hours: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -31,6 +34,9 @@ export type Database = {
           gym_name?: string | null;
           gym_lat?: number | null;
           gym_lng?: number | null;
+          gym_osm_type?: string | null;
+          gym_osm_id?: number | null;
+          gym_opening_hours?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -45,6 +51,9 @@ export type Database = {
           gym_name?: string | null;
           gym_lat?: number | null;
           gym_lng?: number | null;
+          gym_osm_type?: string | null;
+          gym_osm_id?: number | null;
+          gym_opening_hours?: string | null;
           updated_at?: string;
         };
         Relationships: [];
