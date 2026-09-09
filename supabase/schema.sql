@@ -37,6 +37,30 @@ create table if not exists public.plan_days (
   notes text
 );
 
+create table if not exists public.plan_exercises (
+  id uuid primary key default gen_random_uuid(),
+  plan_day_id uuid not null references public.plan_days(id) on delete cascade,
+  exercise_id text not null,
+  exercise_name text not null,
+  sort_order integer not null default 0,
+  sets integer not null default 3,
+  reps text not null default '8-12',
+  rest_seconds integer,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.completed_sets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  plan_exercise_id uuid not null references public.plan_exercises(id) on delete cascade,
+  set_number integer not null,
+  weight numeric,
+  reps integer,
+  effort numeric,
+  completed_at timestamptz not null default now()
+);
+
 create table if not exists public.calendar_events (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -51,6 +75,8 @@ create table if not exists public.calendar_events (
 create index if not exists plans_user_id_idx on public.plans(user_id);
 create index if not exists plan_days_plan_id_idx on public.plan_days(plan_id);
 create index if not exists calendar_events_user_id_idx on public.calendar_events(user_id);
+create index if not exists plan_exercises_plan_day_id_idx on public.plan_exercises(plan_day_id);
+create index if not exists completed_sets_user_id_idx on public.completed_sets(user_id);
 create index if not exists public_profiles_username_idx on public.profiles(username) where is_public = true;
 
 create or replace function public.set_updated_at()
@@ -96,6 +122,8 @@ alter table public.profiles enable row level security;
 alter table public.plans enable row level security;
 alter table public.plan_days enable row level security;
 alter table public.calendar_events enable row level security;
+alter table public.plan_exercises enable row level security;
+alter table public.completed_sets enable row level security;
 
 drop policy if exists "Users can read own profile" on public.profiles;
 create policy "Users can read own profile" on public.profiles for select using (auth.uid() = id);
@@ -106,10 +134,21 @@ create policy "Users can insert own profile" on public.profiles for insert with 
 drop policy if exists "Anyone can read public profiles" on public.profiles;
 create policy "Anyone can read public profiles" on public.profiles for select using (is_public = true);
 
+drop policy if exists "Users can manage own plans" on public.plans;
 create policy "Users can manage own plans" on public.plans for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "Users can manage days in own plans" on public.plan_days;
 create policy "Users can manage days in own plans" on public.plan_days for all using (
   exists (select 1 from public.plans where plans.id = plan_days.plan_id and plans.user_id = auth.uid())
 ) with check (
   exists (select 1 from public.plans where plans.id = plan_days.plan_id and plans.user_id = auth.uid())
 );
+drop policy if exists "Users can manage own calendar events" on public.calendar_events;
 create policy "Users can manage own calendar events" on public.calendar_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "Users can manage exercises in own plan days" on public.plan_exercises;
+create policy "Users can manage exercises in own plan days" on public.plan_exercises for all using (
+  exists (select 1 from public.plan_days join public.plans on plans.id = plan_days.plan_id where plan_days.id = plan_exercises.plan_day_id and plans.user_id = auth.uid())
+) with check (
+  exists (select 1 from public.plan_days join public.plans on plans.id = plan_days.plan_id where plan_days.id = plan_exercises.plan_day_id and plans.user_id = auth.uid())
+);
+drop policy if exists "Users can manage own completed sets" on public.completed_sets;
+create policy "Users can manage own completed sets" on public.completed_sets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

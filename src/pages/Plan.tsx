@@ -8,11 +8,22 @@ import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const questions = [
   { key: "experience", title: "Where are you starting?", explanation: "This helps KOVA choose a sensible starting point. You do not need to know training science.", options: ["Complete beginner", "Some experience", "Intermediate", "Advanced", "I don't know"] },
+  { key: "regularity", title: "Do you train regularly today?", explanation: "KOVA uses your current routine to make the first week realistic.", options: ["Not yet", "Sometimes", "Most weeks", "I don't know"] },
   { key: "location", title: "Where do you train?", explanation: "Your training space tells KOVA which movements can realistically fit your plan.", options: ["Gym", "Home", "Home + Gym", "No equipment / bodyweight"] },
+  { key: "equipment", title: "What equipment can you use?", explanation: "List equipment you know you can access. KOVA will not assume anything you do not provide.", options: [] },
   { key: "availability", title: "How often can you train?", explanation: "A plan should fit your real week, not an ideal week.", options: ["2 days", "3 days", "4 days", "5 days", "6+ days", "I don't know"] },
-  { key: "goal", title: "What do you want to work toward?", explanation: "KOVA uses your main goal to shape the direction of your plan.", options: ["Build muscle", "Lose fat", "Get stronger", "General fitness", "Improve endurance", "I don't know"] },
+  { key: "days", title: "Which days usually work?", explanation: "Choose the days that are most realistic for you. You can name them or skip this.", options: [] },
+  { key: "time", title: "When do you usually train?", explanation: "This helps KOVA keep your plan practical. It is optional.", options: ["Morning", "Afternoon", "Evening", "It changes"] },
+  { key: "duration", title: "How long can each workout be?", explanation: "KOVA should fit inside your available time.", options: ["30 minutes", "45 minutes", "60 minutes", "90 minutes", "Custom", "I don't know"] },
+  { key: "goal", title: "What do you want to work toward?", explanation: "KOVA uses your main goal to shape the direction of your plan.", options: ["Build muscle", "Lose fat", "Get stronger", "General fitness", "Improve health", "Improve endurance", "Athletic performance", "I don't know"] },
   { key: "timeline", title: "What would you like to achieve over the next few months?", explanation: "A few words help make your plan feel personal. You can skip this.", options: [] },
-  { key: "preferences", title: "Any exercises or movements to know about?", explanation: "Tell KOVA what you enjoy, dislike or cannot currently do. This is optional.", options: [] },
+  { key: "age", title: "How old are you?", explanation: "Age can help KOVA keep recommendations appropriate. You can choose not to share it.", options: [] },
+  { key: "body", title: "Height and weight?", explanation: "These are optional context for useful planning. KOVA does not need them to help you start.", options: [] },
+  { key: "preferences", title: "What exercises do you enjoy or dislike?", explanation: "Your preferences help the plan feel like yours. You can skip this.", options: [] },
+  { key: "priority", title: "Anything you want to prioritize?", explanation: "Tell KOVA which areas or training styles matter to you.", options: [] },
+  { key: "limitations", title: "Any movements or limitations to know about?", explanation: "Share what you cannot or do not want to do. KOVA does not diagnose medical conditions.", options: [] },
+  { key: "nutrition", title: "What should nutrition support?", explanation: "This helps connect Food to your plan. You can skip it and add details later.", options: ["Build muscle", "Lose fat", "Maintain", "General health", "I don't know"] },
+  { key: "diet", title: "Any food preferences or meal preferences?", explanation: "Tell KOVA what you like, avoid or prefer. No diet is assumed.", options: [] },
 ] as const;
 
 type Mode = "ai" | "manual";

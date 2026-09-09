@@ -27,7 +27,7 @@ To launch the site on Vercel, follow [`DEPLOYMENT.md`](DEPLOYMENT.md). The publi
 
 ## Environment Variables
 
-The project is set up with project specific CONVEX_DEPLOYMENT and VITE_CONVEX_URL environment variables on the client side.
+The project uses `VITE_CONVEX_URL` for the existing Convex waitlist/Stripe frontend connection and `VITE_SUPABASE_URL` plus `VITE_SUPABASE_ANON_KEY` for the new web app. See [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) and [`supabase/schema.sql`](supabase/schema.sql).
 
 The convex server has a separate set of environment variables that are accessible by the convex backend.
 

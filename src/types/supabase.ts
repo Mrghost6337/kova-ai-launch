@@ -98,6 +98,68 @@ export type Database = {
         };
         Relationships: [];
       };
+      plan_exercises: {
+        Row: {
+          id: string;
+          plan_day_id: string;
+          exercise_id: string;
+          exercise_name: string;
+          sort_order: number;
+          sets: number;
+          reps: string;
+          rest_seconds: number | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          plan_day_id: string;
+          exercise_id: string;
+          exercise_name: string;
+          sort_order?: number;
+          sets?: number;
+          reps?: string;
+          rest_seconds?: number | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          sort_order?: number;
+          sets?: number;
+          reps?: string;
+          rest_seconds?: number | null;
+          notes?: string | null;
+        };
+        Relationships: [];
+      };
+      completed_sets: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_exercise_id: string;
+          set_number: number;
+          weight: number | null;
+          reps: number | null;
+          effort: number | null;
+          completed_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan_exercise_id: string;
+          set_number: number;
+          weight?: number | null;
+          reps?: number | null;
+          effort?: number | null;
+          completed_at?: string;
+        };
+        Update: {
+          weight?: number | null;
+          reps?: number | null;
+          effort?: number | null;
+        };
+        Relationships: [];
+      };
       calendar_events: {
         Row: {
           id: string;
