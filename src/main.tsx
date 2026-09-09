@@ -8,6 +8,7 @@ import { Food, Progress, Profile, Settings, Upgrade } from "./pages/AppSections.
 import ExerciseLibrary from "./pages/ExerciseLibrary.tsx";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { InstrumentationProvider } from "@/instrumentation.tsx";
+import { ThemeProvider } from "@/hooks/use-theme";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import { MotionConfig } from "framer-motion";
@@ -24,6 +25,7 @@ import "./types/global.d.ts";
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess.tsx"));
+const PublicProfile = lazy(() => import("./pages/PublicProfile.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const About = lazy(() => import("./pages/About.tsx"));
 const Team = lazy(() => import("./pages/Team.tsx"));
@@ -77,17 +79,17 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <VlyToolbar />
     <InstrumentationProvider>
-      <ConvexAuthProvider client={convex}>
-        <MotionConfig reducedMotion="user">
-          <BrowserRouter>
+      <ThemeProvider>
+        <ConvexAuthProvider client={convex}>
+          <MotionConfig reducedMotion="user">
+            <BrowserRouter>
             <RouteSyncer />
             <Suspense fallback={<RouteLoading />}>
               <Routes>
                 <Route path="/" element={<Landing />} />
-                <Route path="/app" element={<ProductDetail />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/team" element={<Team />} />
+                <Route path="/app" element={<ProductDetail />} />                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/team" element={<Team />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/checkout/success" element={<CheckoutSuccess />} />
@@ -111,13 +113,15 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/dashboard/profile" element={<RequireAuth><Profile /></RequireAuth>} />
                 <Route path="/dashboard/settings" element={<RequireAuth><Settings /></RequireAuth>} />
                 <Route path="/dashboard/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
+                <Route path="/u/:username" element={<RequireAuth><PublicProfile /></RequireAuth>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
-          </BrowserRouter>
-          <Toaster />
-        </MotionConfig>
-      </ConvexAuthProvider>
+            </BrowserRouter>
+            <Toaster />
+          </MotionConfig>
+        </ConvexAuthProvider>
+      </ThemeProvider>
     </InstrumentationProvider>
   </StrictMode>,
 );

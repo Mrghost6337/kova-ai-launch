@@ -1,4 +1,5 @@
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { ArrowRight, Check, Loader2, Mail, LockKeyhole, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -11,6 +12,7 @@ function safeRedirect(value: string | null) {
 
 export default function AuthPage({ redirectAfterAuth = "/dashboard" }: { redirectAfterAuth?: string }) {
   const { isConfigured, isLoading: sessionLoading, isAuthenticated, signIn, signUp, signInWithGoogle } = useSupabaseAuth();
+  const { resolved } = useTheme();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const redirect = safeRedirect(params.get("returnTo") ?? redirectAfterAuth);
@@ -52,7 +54,7 @@ export default function AuthPage({ redirectAfterAuth = "/dashboard" }: { redirec
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-5 py-12 text-white">
+    <main className={`relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-bg)] px-5 py-12 text-white ${resolved === "light" ? "light" : ""}`}>
       <Seo title="Open KOVA AI" description="Sign in to your personal KOVA AI training workspace." path="/auth" />
       <div className="pointer-events-none absolute left-1/2 top-1/3 size-[min(90vw,680px)] -translate-x-1/2 rounded-full bg-white/[0.045] blur-[120px]" />
       <div className="relative z-10 w-full max-w-md">

@@ -232,3 +232,27 @@ drop policy if exists "Users can send messages" on public.direct_messages;
 create policy "Users can send messages" on public.direct_messages for insert with check (auth.uid() = sender_id);
 drop policy if exists "Recipients can mark messages read" on public.direct_messages;
 create policy "Recipients can mark messages read" on public.direct_messages for update using (auth.uid() = recipient_id) with check (auth.uid() = recipient_id);
+
+-- Plan sharing: a public flag on plans plus read policies so shared plans can be
+-- viewed by any signed-in athlete (read-only for non-owners). Idempotent.
+alter table public.plans add column if not exists is_public boolean not null default false;
+
+create index if not exists public_plans_user_idx on public.plans(user_id) where is_public = true;
+
+drop policy if exists "Anyone can read public plans" on public.plans;
+create policy "Anyone can read public plans" on public.plans for select using (is_public = true or auth.uid() = user_id);
+
+drop policy if exists "Anyone can read days of public plans" on public.plan_days;
+create policy "Anyone can read days of public plans" on public.plan_days for select using (
+  exists (select 1 from public.plans where plans.id = plan_days.plan_id and (plans.is_public = true or plans.user_id = auth.uid()))
+);
+
+drop policy if exists "Anyone can read exercises of public plans" on public.plan_exercises;
+create policy "Anyone can read exercises of public plans" on public.plan_exercises for select using (
+  exists (
+    select 1 from public.plan_days
+    join public.plans on plans.id = plan_days.plan_id
+    where plan_days.id = plan_exercises.plan_day_id
+      and (plans.is_public = true or plans.user_id = auth.uid())
+  )
+);

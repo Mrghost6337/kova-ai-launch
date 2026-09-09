@@ -7,13 +7,16 @@ import {
   Home,
   LogOut,
   Settings,
+  UserRound,
   Utensils,
   X,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import { KovaLogo } from "@/components/KovaLogo";
+import { useTheme } from "@/hooks/use-theme";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { useKovaProfile } from "@/hooks/use-kova-app";
 
 const navigation = [
   { label: "Home", to: "/dashboard", icon: Home },
@@ -24,19 +27,21 @@ const navigation = [
 ];
 
 const accountLinks = [
-  { label: "Profile", to: "/dashboard/profile" },
-  { label: "Settings", to: "/dashboard/settings" },
-  { label: "Subscription", to: "/dashboard/upgrade" },
+  { label: "Profile", to: "/dashboard/profile", icon: UserRound },
+  { label: "Settings", to: "/dashboard/settings", icon: Settings },
+  { label: "Subscription", to: "/dashboard/upgrade", icon: CreditCard },
 ];
 
 function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase() || "K";
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "K"
+  );
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -44,6 +49,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useSupabaseAuth();
+  const { profile } = useKovaProfile(user?.id);
+  const { resolved } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const metadata = user?.user_metadata as Record<string, unknown> | undefined;
@@ -51,20 +58,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     typeof metadata?.display_name === "string" && metadata.display_name.trim()
       ? metadata.display_name
       : user?.email?.split("@")[0] || "Athlete";
-  const avatarUrl = typeof metadata?.avatar_url === "string" ? metadata.avatar_url : "";
+  const avatarUrl = typeof metadata?.avatar_url === "string" ? metadata.avatar_url : profile?.avatar_url || "";
+  const username = profile?.username;
 
   useEffect(() => {
     setAccountOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("kova-theme") ?? "dark";
-    const applyTheme = () => {
-      const systemLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-      document.documentElement.classList.toggle("light", storedTheme === "light" || (storedTheme === "system" && systemLight));
-    };
-    applyTheme();
-  }, []);
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
@@ -83,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <div className="app-shell min-h-screen bg-[#050505] text-white">
+    <div className={`app-shell min-h-screen bg-[var(--app-bg)] text-white ${resolved === "light" ? "light" : ""}`}>
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-white/[0.08] bg-black/90 p-5 backdrop-blur-2xl transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
@@ -145,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm text-white/80">{displayName}</span>
-              <span className="mt-0.5 block truncate text-[11px] text-white/30">Account menu</span>
+              <span className="mt-0.5 block truncate text-[11px] text-white/30">{username ? `@${username}` : "Account menu"}</span>
             </span>
             <ChevronRight className={`size-4 text-white/30 transition-transform ${accountOpen ? "rotate-90" : ""}`} />
           </button>
@@ -157,23 +156,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                 transition={{ duration: 0.18 }}
-                className="absolute bottom-[calc(100%+12px)] left-0 right-0 overflow-hidden rounded-2xl border border-white/10 bg-[#111]/95 p-1.5 shadow-2xl backdrop-blur-2xl"
+                className="absolute bottom-[calc(100%+12px)] left-0 right-0 overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface-solid)]/95 p-1.5 shadow-2xl backdrop-blur-2xl"
               >
                 <div className="border-b border-white/[0.08] px-3 py-2.5">
                   <p className="truncate text-xs text-white/70">{displayName}</p>
                   <p className="mt-1 truncate text-[11px] text-white/30">{user?.email}</p>
                 </div>
-                {accountLinks.map(({ label, to }) => (
+                {accountLinks.map(({ label, to, icon: Icon }) => (
                   <button
                     type="button"
                     key={to}
                     onClick={() => navigate(to)}
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 transition-colors hover:bg-white/[0.08] hover:text-white"
                   >
-                    {label === "Subscription" ? <CreditCard className="size-4" /> : label === "Settings" ? <Settings className="size-4" /> : <Home className="size-4" />}
+                    <Icon className="size-4" />
                     {label}
                   </button>
                 ))}
+                {username && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/u/${encodeURIComponent(username)}`)}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 transition-colors hover:bg-white/[0.08] hover:text-white"
+                  >
+                    <UserRound className="size-4" />
+                    View public profile
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => void logout()}
