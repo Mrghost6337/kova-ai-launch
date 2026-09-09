@@ -10,29 +10,22 @@ import {
   MapPin,
   Navigation,
   Plus,
-  Search,
   Sparkles,
-  UserPlus,
-  UserCheck,
   Users,
   Utensils,
   Waves,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { GymMiniMap } from "@/components/GymMiniMap";
 import { Seo } from "@/components/Seo";
-import { useFriends, usePublicProfiles, useFollows } from "@/hooks/use-social";
+import { useFriends } from "@/hooks/use-social";
 import { formatDistance, haversineKm } from "@/lib/geo";
 import { gymStatus } from "@/lib/opening-hours";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { useCompletedSets, useKovaPlanDays, useKovaPlans, useKovaProfile } from "@/hooks/use-kova-app";
 
-function Widget({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <section className={`liquid-glass rounded-[1.5rem] border-white/[0.1] bg-white/[0.035] p-5 sm:p-6 ${className}`}>{children}</section>;
-}
 function Label({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/35">{children}</p>;
 }
@@ -64,10 +57,6 @@ export default function AppDashboard() {
   const firstName = (profile?.display_name || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "there").split(" ")[0];
   const isLoading = plansLoading || setsLoading;
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const { results: athletes, isLoading: athletesLoading, error: athletesError } = usePublicProfiles(user?.id, searchQuery);
-  const { following, toggleFollow } = useFollows(user?.id);
-  const [followBusy, setFollowBusy] = useState<string | null>(null);
   const [showAllFriends, setShowAllFriends] = useState(false);
   const { friends, isLoading: friendsLoading } = useFriends(user?.id);
   const [now, setNow] = useState(() => new Date());
@@ -95,17 +84,6 @@ export default function AppDashboard() {
         : null,
     [userCoords, profile?.gym_lat, profile?.gym_lng],
   );
-
-  const follow = async (targetId: string) => {
-    setFollowBusy(targetId);
-    try {
-      await toggleFollow(targetId);
-    } catch {
-      toast("Could not update follow. Check that the follows RLS policy allows it.");
-    } finally {
-      setFollowBusy(null);
-    }
-  };
 
   return (
     <AppShell>
@@ -215,8 +193,8 @@ export default function AppDashboard() {
               </motion.section>
             </div>
 
-            {/* Plan + community */}
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            {/* Current plan + friends */}
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }} className="liquid-glass rounded-[1.5rem] p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <Label>Current plan</Label>
@@ -227,84 +205,37 @@ export default function AppDashboard() {
                 <Link to={`/dashboard/plan/${activePlan.id}`} className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white">Edit plan <ArrowRight className="size-4" /></Link>
               </motion.section>
 
-              <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }} className="liquid-glass rounded-[1.5rem] p-5 sm:p-6 lg:col-span-2">
-                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                  <div>
-                    <div className="flex items-center gap-2.5"><Users className="size-4 text-kova-sky" /><Label>Friends</Label></div>
-                    <h2 className="mt-3 font-serif text-3xl italic tracking-[-0.04em]">Your training circle.</h2>
-                  </div>
-                  {profile?.is_public && profile.username && (
-                    <Link to={`/u/${encodeURIComponent(profile.username)}`} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.12em] text-white/45 hover:text-white">My public profile <ArrowRight className="size-3" /></Link>
+              <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }} className="liquid-glass rounded-[1.5rem] p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5"><Users className="size-4 text-kova-sky" /><Label>Friends</Label></div>
+                  {friends.length > 3 && (
+                    <button type="button" onClick={() => setShowAllFriends((current) => !current)} className="text-xs font-medium uppercase tracking-[0.12em] text-white/45 transition-colors hover:text-white">{showAllFriends ? "Show less" : "View all"}</button>
                   )}
                 </div>
-
                 {friendsLoading ? (
-                  <div className="mt-5 flex items-center gap-3 text-sm text-white/40"><span className="size-4 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />Loading friends…</div>
+                  <div className="mt-4 flex items-center gap-2 text-xs text-white/40"><span className="size-3 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />Loading…</div>
                 ) : friends.length ? (
-                  <>
-                    <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                      {friends.slice(0, showAllFriends ? undefined : 3).map((friend) => (
-                        <Link key={friend.id} to={`/u/${encodeURIComponent(friend.username || friend.id)}`} className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3 transition-colors hover:border-white/20 hover:bg-white/[0.05]">
-                          {friend.avatar_url ? (
-                            <img src={friend.avatar_url} alt="" className="size-10 rounded-full border border-white/15 object-cover" />
-                          ) : (
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-kova-sky/15 text-xs font-semibold text-kova-sky">{initials(friend.display_name || friend.username || "K")}</span>
-                          )}
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm text-white/85">{friend.display_name || friend.username || "Athlete"}</span>
-                            <span className="block truncate text-xs text-white/35">@{friend.username || "—"}</span>
-                          </span>
-                          <ChevronRight className="ml-auto size-4 shrink-0 text-white/25 transition-transform group-hover:translate-x-0.5" />
-                        </Link>
-                      ))}
-                    </div>
-                    {friends.length > 3 && (
-                      <button type="button" onClick={() => setShowAllFriends((current) => !current)} className="mt-4 text-xs font-medium uppercase tracking-[0.12em] text-white/45 hover:text-white">{showAllFriends ? "Show less" : `Show all ${friends.length} friends`}</button>
-                    )}
-                  </>
-                ) : (
-                  <p className="mt-5 text-sm leading-6 text-white/45">No friends yet. Follow athletes below — their name and profile will show up here.</p>
-                )}
-
-                <label className="relative mt-5 block">
-                  <Search className="absolute left-4 top-3.5 size-4 text-white/35" />
-                  <input
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Find athletes by name or @username"
-                    className="h-11 w-full rounded-full border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/30"
-                  />
-                </label>
-                {athletesError && <p className="mt-4 text-xs text-red-200">{athletesError}</p>}
-                {searchQuery.trim() && !athletesLoading && !athletes.length && !athletesError ? (
-                  <p className="mt-4 text-sm text-white/40">No public athletes match “{searchQuery.trim()}”. Make your own profile public in Settings to be found.</p>
-                ) : athletes.length ? (
-                  <div className="mt-4 space-y-2">
-                    {athletes.map((athlete) => (
-                      <div key={athlete.id} className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3">
-                        {athlete.avatar_url ? (
-                          <img src={athlete.avatar_url} alt="" className="size-10 rounded-full border border-white/15 object-cover" />
+                  <div className="mt-4 space-y-1">
+                    {friends.slice(0, showAllFriends ? undefined : 3).map((friend) => (
+                      <Link key={friend.id} to={`/u/${encodeURIComponent(friend.username || friend.id)}`} className="group flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/[0.05]">
+                        {friend.avatar_url ? (
+                          <img src={friend.avatar_url} alt="" className="size-9 shrink-0 rounded-full border border-white/15 object-cover" />
                         ) : (
-                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-black">{initials(athlete.display_name || athlete.username || "K")}</span>
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-kova-sky/15 text-xs font-semibold text-kova-sky">{initials(friend.display_name || friend.username || "K")}</span>
                         )}
-                        <Link to={`/u/${encodeURIComponent(athlete.username || athlete.id)}`} className="min-w-0 flex-1">
-                          <p className="truncate text-sm text-white/80">{athlete.display_name || athlete.username || "Athlete"}</p>
-                          <p className="truncate text-xs text-white/35">@{athlete.username || "—"}{athlete.fitness_goal ? ` · ${athlete.fitness_goal}` : ""}</p>
-                        </Link>
-                        <button
-                          type="button"
-                          disabled={followBusy === athlete.id}
-                          onClick={() => void follow(athlete.id)}
-                          className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors disabled:opacity-50 ${following.has(athlete.id) ? "border-white/15 text-white/50 hover:bg-white/[0.06]" : "border-white bg-white text-black hover:bg-white/85"}`}
-                        >
-                          {following.has(athlete.id) ? <UserCheck className="size-3.5" /> : <UserPlus className="size-3.5" />}
-                          {following.has(athlete.id) ? "Following" : "Follow"}
-                        </button>
-                      </div>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm text-white/85">{friend.display_name || friend.username || "Athlete"}</span>
+                          <span className="block truncate text-[11px] text-white/35">@{friend.username || "—"}</span>
+                        </span>
+                        <ChevronRight className="size-3.5 shrink-0 text-white/20 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-4 text-sm leading-6 text-white/35">Follow athletes to grow your circle — their shared plans and sessions become visible here.</p>
+                  <div className="mt-4 rounded-xl border border-dashed border-white/10 px-4 py-3.5">
+                    <p className="text-xs text-white/45">No friends yet.</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/30">Follow public athletes to see them here.</p>
+                  </div>
                 )}
               </motion.section>
             </div>
