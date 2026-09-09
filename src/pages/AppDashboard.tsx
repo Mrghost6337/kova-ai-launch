@@ -22,8 +22,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { GymMiniMap } from "@/components/GymMiniMap";
 import { Seo } from "@/components/Seo";
 import { useFriends, usePublicProfiles, useFollows } from "@/hooks/use-social";
+import { formatDistance, haversineKm } from "@/lib/geo";
 import { gymStatus } from "@/lib/opening-hours";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { useCompletedSets, useKovaPlanDays, useKovaPlans, useKovaProfile } from "@/hooks/use-kova-app";
@@ -76,6 +78,22 @@ export default function AppDashboard() {
   const gymInfo = useMemo(
     () => (profile?.gym_opening_hours ? gymStatus(profile.gym_opening_hours, now) : { state: "unknown" as const, statusLabel: "Hours unknown", hoursToday: null, nextChange: null }),
     [profile?.gym_opening_hours, now],
+  );
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => setUserCoords({ lat: position.coords.latitude, lng: position.coords.longitude }),
+      () => undefined,
+      { timeout: 8000 },
+    );
+  }, []);
+  const gymDistanceKm = useMemo(
+    () =>
+      userCoords && profile?.gym_lat != null && profile.gym_lng != null
+        ? haversineKm(userCoords.lat, userCoords.lng, profile.gym_lat, profile.gym_lng)
+        : null,
+    [userCoords, profile?.gym_lat, profile?.gym_lng],
   );
 
   const follow = async (targetId: string) => {
@@ -312,9 +330,14 @@ export default function AppDashboard() {
                         {gymInfo.statusLabel}
                       </span>
                       {gymInfo.nextChange && <span className="text-[11px] text-white/40">{gymInfo.nextChange}</span>}
+                      {gymDistanceKm !== null && <span className="text-[11px] text-white/40">· {formatDistance(gymDistanceKm)} away</span>}
                     </div>
                     {gymInfo.hoursToday && <p className="mt-2 text-xs text-white/40">Today · {gymInfo.hoursToday}</p>}
-                    <div className="mt-5 flex flex-wrap gap-2">
+                    <GymMiniMap
+                      gym={{ name: profile.gym_name, lat: profile.gym_lat, lng: profile.gym_lng }}
+                      className="mt-4 h-36 rounded-2xl border border-white/10"
+                    />
+                    <div className="mt-4 flex flex-wrap gap-2">
                       <a href={`https://www.google.com/maps/dir/?api=1&destination=${profile.gym_lat},${profile.gym_lng}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold uppercase tracking-[0.1em] text-black"><Navigation className="size-3.5" />Directions</a>
                       <Link to="/dashboard/settings" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 px-4 text-xs font-medium text-white/70 hover:bg-white/[0.06]">Change</Link>
                     </div>

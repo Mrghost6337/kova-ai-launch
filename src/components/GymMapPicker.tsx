@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LngLatBounds } from "maplibre-gl";
 import MapGL, { type MapRef, Marker, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Check, Crosshair, Dumbbell, Loader2, MapPin, Navigation, Search } from "lucide-react";
+import { GymPin } from "@/components/GymPin";
 import { useTheme } from "@/hooks/use-theme";
+import { formatDistance, haversineKm, DARK_STYLE, LIGHT_STYLE } from "@/lib/geo";
+import { gymStatus } from "@/lib/opening-hours";
 
 export type GymLocation = {
   name: string;
@@ -14,8 +18,6 @@ export type GymLocation = {
 };
 
 const DEFAULT_CENTER: { lat: number; lng: number } = { lat: 52.3676, lng: 4.9041 }; // Amsterdam
-const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
-const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 type NominatimResult = {
   place_id: number;
@@ -67,17 +69,11 @@ async function fetchOsmTags(osmType: string, osmId: number): Promise<Record<stri
   }
 }
 
-function Pin({ dark }: { dark: boolean }) {
-  const pin = dark ? "#ffffff" : "#0a0a0a";
-  const ring = dark ? "#0a0a0a" : "#ffffff";
-  const dot = dark ? "#0a0a0a" : "#ffffff";
-  return (
-    <svg width="36" height="46" viewBox="0 0 36 46" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
-      <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 28 18 28s18-14.5 18-28C36 8.06 27.94 0 18 0z" fill={pin} stroke={ring} strokeWidth="2" />
-      <circle cx="18" cy="17" r="6.5" fill={dot} />
-    </svg>
-  );
-}
+const STATUS_DOT: Record<string, string> = {
+  open: "#34d399",
+  closed: "#fb7185",
+  unknown: "#9ca3af",
+};
 
 export function GymMapPicker({
   value,
@@ -97,7 +93,9 @@ export function GymMapPicker({
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [nearby, setNearby] = useState<OverpassElement[]>([]);
+  const [nearbyCenter, setNearbyCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [filterOpenNow, setFilterOpenNow] = useState(false);
   const [locating, setLocating] = useState(false);
   const [naming, setNaming] = useState(false);
   const [error, setError] = useState("");
@@ -220,7 +218,8 @@ export function GymMapPicker({
         if (lat2 === undefined || lng2 === undefined) continue;
         unique.set(`${element.type}-${element.id}`, element);
       }
-      setNearby([...unique.values()].slice(0, 12));
+      setNearby([...unique.values()].slice(0, 14));
+      setNearbyCenter({ lat, lng });
       if (!unique.size) setError("No gyms found within 5 km of this spot. Drag the map to a city and try again.");
     } catch {
       setError("Could not load nearby gyms. The free OpenStreetMap service may be busy — try again in a moment.");
@@ -228,6 +227,20 @@ export function GymMapPicker({
       setNearbyLoading(false);
     }
   }, [selected]);
+
+  // Fit the map to all nearby gyms once they are loaded.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !nearby.length) return;
+    const bounds = new LngLatBounds();
+    for (const gym of nearby) {
+      const lat = gym.lat ?? gym.center?.lat;
+      const lng = gym.lon ?? gym.center?.lon;
+      if (lat !== undefined && lng !== undefined) bounds.extend([lng, lat]);
+    }
+    if (nearbyCenter) bounds.extend([nearbyCenter.lng, nearbyCenter.lat]);
+    map.fitBounds(bounds, { padding: 64, duration: 800, maxZoom: 15 });
+  }, [nearby, nearbyCenter]);
 
   const useMyLocation = useCallback(() => {
     if (!("geolocation" in navigator)) {
@@ -255,6 +268,18 @@ export function GymMapPicker({
       mapRef.current.flyTo({ center: [focus.lng, focus.lat], zoom: Math.max(mapRef.current.getZoom(), 14), duration: 700 });
     }
   }, [focus]);
+
+  const now = new Date();
+  const nearbyWithStatus = nearby.map((gym) => {
+    const status = gym.tags?.opening_hours ? gymStatus(gym.tags.opening_hours, now) : { state: "unknown" as const };
+    const lat = gym.lat ?? gym.center?.lat ?? 0;
+    const lng = gym.lon ?? gym.center?.lon ?? 0;
+    const distance = nearbyCenter ? haversineKm(nearbyCenter.lat, nearbyCenter.lng, lat, lng) : null;
+    return { gym, status, lat, lng, distance };
+  });
+  const visibleNearby = filterOpenNow ? nearbyWithStatus.filter((entry) => entry.status.state === "open") : nearbyWithStatus;
+  const hasHours = nearbyWithStatus.some((entry) => entry.status.state !== "unknown");
+  const selectedStatus = selected?.openingHours ? gymStatus(selected.openingHours, now) : null;
 
   return (
     <div className="space-y-3">
@@ -290,7 +315,7 @@ export function GymMapPicker({
       </div>
 
       {/* Map */}
-      <div className="relative h-72 overflow-hidden rounded-2xl border border-white/10">
+      <div className="relative h-80 overflow-hidden rounded-2xl border border-white/10 sm:h-96">
         <MapGL
           ref={mapRef}
           style={{ width: "100%", height: "100%" }}
@@ -303,6 +328,25 @@ export function GymMapPicker({
           onClick={(event) => void pickRaw(event.lngLat.lat, event.lngLat.lng)}
         >
           <NavigationControl position="bottom-right" />
+          {visibleNearby.map(({ gym, status, lat, lng }) => (
+            <Marker key={`${gym.type}-${gym.id}`} longitude={lng} latitude={lat} anchor="bottom">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  pickFromOverpass(gym);
+                }}
+                className="group flex flex-col items-center"
+                title={`${gym.tags?.name ?? "Gym"}${status.state === "open" ? " — open now" : status.state === "closed" ? " — closed now" : ""}`}
+              >
+                <span
+                  className="block size-4 rounded-full border-2 shadow-lg transition-transform group-hover:scale-125"
+                  style={{ background: STATUS_DOT[status.state], borderColor: dark ? "#0a0a0a" : "#ffffff" }}
+                />
+                <span className="mt-0.5 h-1.5 w-px" style={{ background: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.3)" }} />
+              </button>
+            </Marker>
+          ))}
           {selected && (
             <Marker
               longitude={selected.lng}
@@ -311,7 +355,7 @@ export function GymMapPicker({
               draggable
               onDragEnd={(event) => void pickRaw(event.lngLat.lat, event.lngLat.lng)}
             >
-              <Pin dark={dark} />
+              <GymPin dark={dark} pulse />
             </Marker>
           )}
         </MapGL>
@@ -339,11 +383,24 @@ export function GymMapPicker({
       {/* Nearby gym results */}
       {nearby.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/35">Gyms around this spot</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/35">
+              {filterOpenNow ? "Open right now" : "Gyms around this spot"}
+              {visibleNearby.length ? ` · ${visibleNearby.length}` : ""}
+            </p>
+            {hasHours && (
+              <button
+                type="button"
+                onClick={() => setFilterOpenNow((current) => !current)}
+                className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-3 text-[11px] font-medium transition-colors ${filterOpenNow ? "border-kova-emerald/40 bg-kova-emerald/10 text-kova-emerald" : "border-white/15 text-white/50 hover:bg-white/[0.06]"}`}
+              >
+                <span className={`size-1.5 rounded-full ${filterOpenNow ? "bg-kova-emerald" : "bg-white/40"}`} />
+                Open now
+              </button>
+            )}
+          </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {nearby.map((gym) => {
-              const lat = gym.lat ?? gym.center?.lat ?? 0;
-              const lng = gym.lon ?? gym.center?.lon ?? 0;
+            {visibleNearby.map(({ gym, status, lat, lng, distance }) => {
               const name = gym.tags?.name ?? "Gym";
               const active = selected?.lat === lat && selected?.lng === lng;
               return (
@@ -353,12 +410,14 @@ export function GymMapPicker({
                   onClick={() => pickFromOverpass(gym)}
                   className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-medium transition-colors ${active ? "border-white bg-white text-black" : "border-white/15 bg-white/[0.04] text-white/75 hover:bg-white/[0.08]"}`}
                 >
-                  <MapPin className="size-3.5" />
-                  <span className="max-w-44 truncate">{name}</span>
+                  <span className="size-1.5 rounded-full" style={{ background: STATUS_DOT[status.state] }} />
+                  <span className="max-w-40 truncate">{name}</span>
+                  {distance !== null && <span className={active ? "text-black/45" : "text-white/30"}>{formatDistance(distance)}</span>}
                   {active && <Check className="size-3.5" />}
                 </button>
               );
             })}
+            {!visibleNearby.length && <p className="text-xs text-white/40">No gyms are open right now.</p>}
           </div>
         </div>
       )}
@@ -376,8 +435,15 @@ export function GymMapPicker({
               <p className="truncate text-sm font-medium text-white/85">{selected.name}</p>
               <p className="mt-0.5 text-xs text-white/40">
                 {selected.lat.toFixed(5)}, {selected.lng.toFixed(5)}
-                {selected.openingHours ? " · hours found" : ""}
               </p>
+              {selectedStatus && (
+                <p className={`mt-1 flex items-center gap-1.5 text-[11px] font-medium ${selectedStatus.state === "open" ? "text-kova-emerald" : selectedStatus.state === "closed" ? "text-kova-rose" : "text-white/40"}`}>
+                  <span className="size-1.5 rounded-full" style={{ background: STATUS_DOT[selectedStatus.state] }} />
+                  {selectedStatus.statusLabel}
+                  {selectedStatus.nextChange ? ` · ${selectedStatus.nextChange}` : ""}
+                  {selectedStatus.hoursToday ? ` · Today ${selectedStatus.hoursToday}` : ""}
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -394,7 +460,7 @@ export function GymMapPicker({
 
       <p className="flex items-start gap-2 text-[11px] leading-5 text-white/30">
         <Navigation className="mt-0.5 size-3 shrink-0" />
-        Map data © OpenStreetMap contributors · tiles by OpenFreeMap · search by Nominatim · gyms &amp; opening hours by Overpass — all free, no API key. Drag the pin or tap the map to fine-tune.
+        Map data © OpenStreetMap contributors · tiles by OpenFreeMap · search by Nominatim · gyms &amp; opening hours by Overpass — all free, no API key. Colored dots show gyms that are open (green) or closed (red) right now.
       </p>
     </div>
   );

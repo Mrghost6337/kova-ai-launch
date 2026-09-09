@@ -19,6 +19,7 @@ import {
 import { Link } from "react-router";
 import { AppShell } from "@/components/AppShell";
 import { GymMapPicker, type GymLocation } from "@/components/GymMapPicker";
+import { gymStatus } from "@/lib/opening-hours";
 import { Seo } from "@/components/Seo";
 import { useKovaProfile } from "@/hooks/use-kova-app";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
@@ -255,6 +256,16 @@ export function Settings() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-white/80">{gym.name}</p>
                 <p className="mt-0.5 text-xs text-white/35">{gym.lat.toFixed(5)}, {gym.lng.toFixed(5)}</p>
+                {gym.openingHours && (() => {
+                  const status = gymStatus(gym.openingHours, new Date());
+                  return (
+                    <p className={`mt-1.5 flex items-center gap-1.5 text-[11px] font-medium ${status.state === "open" ? "text-kova-emerald" : status.state === "closed" ? "text-kova-rose" : "text-white/40"}`}>
+                      <span className={`size-1.5 rounded-full ${status.state === "open" ? "bg-kova-emerald" : status.state === "closed" ? "bg-kova-rose" : "bg-white/40"}`} />
+                      {status.statusLabel}
+                      {status.nextChange ? ` · ${status.nextChange}` : ""}
+                    </p>
+                  );
+                })()}
               </div>
             </div>
             <div className="flex items-center gap-2">
