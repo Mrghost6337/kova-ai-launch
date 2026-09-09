@@ -8,6 +8,7 @@ import {
   LogOut,
   Settings,
   UserRound,
+  Users,
   Utensils,
   X,
 } from "lucide-react";
@@ -23,7 +24,7 @@ const navigation = [
   { label: "Plan", to: "/dashboard/plan", icon: CalendarDays },
   { label: "Food", to: "/dashboard/food", icon: Utensils },
   { label: "Progress", to: "/dashboard/progress", icon: Activity },
-  { label: "Settings", to: "/dashboard/settings", icon: Settings },
+  { label: "Social", to: "/dashboard/social", icon: Users },
 ];
 
 const accountLinks = [

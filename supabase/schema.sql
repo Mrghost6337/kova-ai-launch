@@ -242,18 +242,87 @@ create policy "Users can send messages" on public.direct_messages for insert wit
 drop policy if exists "Recipients can mark messages read" on public.direct_messages;
 create policy "Recipients can mark messages read" on public.direct_messages for update using (auth.uid() = recipient_id) with check (auth.uid() = recipient_id);
 
+-- Social v2: public posts, post likes, and person-to-person plan sharing.
+create table if not exists public.posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.post_likes (
+  post_id uuid not null references public.posts(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+
+create table if not exists public.plan_shares (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references auth.users(id) on delete cascade,
+  recipient_id uuid not null references auth.users(id) on delete cascade,
+  plan_id uuid not null references public.plans(id) on delete cascade,
+  note text,
+  read_at timestamptz,
+  created_at timestamptz not null default now(),
+  check (sender_id <> recipient_id)
+);
+
+create index if not exists posts_user_id_idx on public.posts(user_id, created_at desc);
+create index if not exists post_likes_user_id_idx on public.post_likes(user_id);
+create index if not exists plan_shares_recipient_idx on public.plan_shares(recipient_id, created_at desc);
+create index if not exists plan_shares_plan_idx on public.plan_shares(plan_id);
+
+alter table public.posts enable row level security;
+alter table public.post_likes enable row level security;
+alter table public.plan_shares enable row level security;
+
+drop policy if exists "Public profiles can show posts" on public.posts;
+create policy "Public profiles can show posts" on public.posts for select using (
+  auth.uid() = user_id or exists (select 1 from public.profiles where profiles.id = posts.user_id and profiles.is_public = true)
+);
+drop policy if exists "Users can create own posts" on public.posts;
+create policy "Users can create own posts" on public.posts for insert with check (auth.uid() = user_id);
+drop policy if exists "Users can delete own posts" on public.posts;
+create policy "Users can delete own posts" on public.posts for delete using (auth.uid() = user_id);
+
+drop policy if exists "Anyone can read likes on public posts" on public.post_likes;
+create policy "Anyone can read likes on public posts" on public.post_likes for select using (
+  exists (select 1 from public.posts join public.profiles on profiles.id = posts.user_id where posts.id = post_likes.post_id and (posts.user_id = auth.uid() or profiles.is_public = true))
+);
+drop policy if exists "Users can manage own post likes" on public.post_likes;
+create policy "Users can manage own post likes" on public.post_likes for insert with check (auth.uid() = user_id);
+drop policy if exists "Users can remove own post likes" on public.post_likes;
+create policy "Users can remove own post likes" on public.post_likes for delete using (auth.uid() = user_id);
+
+drop policy if exists "Recipients can read plan shares" on public.plan_shares;
+create policy "Recipients can read plan shares" on public.plan_shares for select using (auth.uid() = recipient_id);
+drop policy if exists "Senders can send plan shares" on public.plan_shares;
+create policy "Senders can send plan shares" on public.plan_shares for insert with check (auth.uid() = sender_id);
+drop policy if exists "Users can delete plan shares" on public.plan_shares;
+create policy "Users can delete plan shares" on public.plan_shares for delete using (auth.uid() = sender_id or auth.uid() = recipient_id);
+drop policy if exists "Recipients can mark plan shares read" on public.plan_shares;
+create policy "Recipients can mark plan shares read" on public.plan_shares for update using (auth.uid() = recipient_id) with check (auth.uid() = recipient_id);
+
 -- Plan sharing: a public flag on plans plus read policies so shared plans can be
--- viewed by any signed-in athlete (read-only for non-owners). Idempotent.
+-- viewed by any signed-in athlete (read-only for non-owners). A plan sent to a
+-- specific user via plan_shares is readable by that recipient even when private.
 alter table public.plans add column if not exists is_public boolean not null default false;
 
 create index if not exists public_plans_user_idx on public.plans(user_id) where is_public = true;
 
 drop policy if exists "Anyone can read public plans" on public.plans;
-create policy "Anyone can read public plans" on public.plans for select using (is_public = true or auth.uid() = user_id);
+create policy "Anyone can read public plans" on public.plans for select using (
+  is_public = true or auth.uid() = user_id
+  or exists (select 1 from public.plan_shares where plan_shares.plan_id = plans.id and plan_shares.recipient_id = auth.uid())
+);
 
 drop policy if exists "Anyone can read days of public plans" on public.plan_days;
 create policy "Anyone can read days of public plans" on public.plan_days for select using (
-  exists (select 1 from public.plans where plans.id = plan_days.plan_id and (plans.is_public = true or plans.user_id = auth.uid()))
+  exists (select 1 from public.plans where plans.id = plan_days.plan_id and (
+    plans.is_public = true or plans.user_id = auth.uid()
+    or exists (select 1 from public.plan_shares where plan_shares.plan_id = plans.id and plan_shares.recipient_id = auth.uid())
+  ))
 );
 
 drop policy if exists "Anyone can read exercises of public plans" on public.plan_exercises;
@@ -262,6 +331,7 @@ create policy "Anyone can read exercises of public plans" on public.plan_exercis
     select 1 from public.plan_days
     join public.plans on plans.id = plan_days.plan_id
     where plan_days.id = plan_exercises.plan_day_id
-      and (plans.is_public = true or plans.user_id = auth.uid())
+      and (plans.is_public = true or plans.user_id = auth.uid()
+        or exists (select 1 from public.plan_shares where plan_shares.plan_id = plans.id and plan_shares.recipient_id = auth.uid()))
   )
 );

@@ -241,6 +241,68 @@ export type Database = {
         };
         Relationships: [];
       };
+      posts: {
+        Row: {
+          id: string;
+          user_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      post_likes: {
+        Row: {
+          post_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          post_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          post_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      plan_shares: {
+        Row: {
+          id: string;
+          sender_id: string;
+          recipient_id: string;
+          plan_id: string;
+          note: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          sender_id: string;
+          recipient_id: string;
+          plan_id: string;
+          note?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          note?: string | null;
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
       direct_messages: {
         Row: {
           id: string;

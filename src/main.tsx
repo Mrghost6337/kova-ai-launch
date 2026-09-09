@@ -26,6 +26,7 @@ const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess.tsx"));
 const PublicProfile = lazy(() => import("./pages/PublicProfile.tsx"));
+const Social = lazy(() => import("./pages/Social.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const About = lazy(() => import("./pages/About.tsx"));
 const Team = lazy(() => import("./pages/Team.tsx"));
@@ -110,6 +111,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/dashboard/food" element={<RequireAuth><Food /></RequireAuth>} />
                 <Route path="/dashboard/exercises" element={<RequireAuth><ExerciseLibrary /></RequireAuth>} />
                 <Route path="/dashboard/progress" element={<RequireAuth><Progress /></RequireAuth>} />
+                <Route path="/dashboard/social" element={<RequireAuth><Social /></RequireAuth>} />
                 <Route path="/dashboard/profile" element={<RequireAuth><Profile /></RequireAuth>} />
                 <Route path="/dashboard/settings" element={<RequireAuth><Settings /></RequireAuth>} />
                 <Route path="/dashboard/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
