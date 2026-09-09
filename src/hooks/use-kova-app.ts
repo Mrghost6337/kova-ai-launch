@@ -73,7 +73,22 @@ export function useKovaPlans(userId: string | undefined) {
     return result.data;
   }, [userId]);
 
-  return { plans, isLoading, error, reload: load, createPlan };
+  const updatePlan = useCallback(async (planId: string, changes: Database["public"]["Tables"]["plans"]["Update"]) => {
+    if (!supabase || !userId) throw new Error("You must be signed in.");
+    const result = await supabase.from("plans").update(changes).eq("id", planId).eq("user_id", userId).select().single();
+    if (result.error) throw result.error;
+    setPlans((current) => current.map((plan) => plan.id === planId ? result.data : plan));
+    return result.data;
+  }, [userId]);
+
+  const deletePlan = useCallback(async (planId: string) => {
+    if (!supabase || !userId) throw new Error("You must be signed in.");
+    const result = await supabase.from("plans").delete().eq("id", planId).eq("user_id", userId);
+    if (result.error) throw result.error;
+    setPlans((current) => current.filter((plan) => plan.id !== planId));
+  }, [userId]);
+
+  return { plans, isLoading, error, reload: load, createPlan, updatePlan, deletePlan };
 }
 
 export function useKovaPlanDays(planId: string | undefined, userId: string | undefined) {
@@ -108,7 +123,22 @@ export function useKovaPlanDays(planId: string | undefined, userId: string | und
     return result.data;
   }, [planId, userId]);
 
-  return { days, isLoading, error, reload: load, addDay };
+  const updateDay = useCallback(async (dayId: string, changes: Database["public"]["Tables"]["plan_days"]["Update"]) => {
+    if (!supabase || !planId || !userId) throw new Error("You must be signed in.");
+    const result = await supabase.from("plan_days").update(changes).eq("id", dayId).eq("plan_id", planId).select().single();
+    if (result.error) throw result.error;
+    setDays((current) => current.map((day) => day.id === dayId ? result.data : day).sort((a, b) => a.day_of_week - b.day_of_week));
+    return result.data;
+  }, [planId, userId]);
+
+  const deleteDay = useCallback(async (dayId: string) => {
+    if (!supabase || !planId || !userId) throw new Error("You must be signed in.");
+    const result = await supabase.from("plan_days").delete().eq("id", dayId).eq("plan_id", planId);
+    if (result.error) throw result.error;
+    setDays((current) => current.filter((day) => day.id !== dayId));
+  }, [planId, userId]);
+
+  return { days, isLoading, error, reload: load, addDay, updateDay, deleteDay };
 }
 
 export function useKovaPlanExercises(planDayId: string | undefined, userId: string | undefined) {
@@ -130,7 +160,20 @@ export function useKovaPlanExercises(planDayId: string | undefined, userId: stri
     setExercises((current) => [...current, result.data].sort((a, b) => a.sort_order - b.sort_order));
     return result.data;
   }, [planDayId, userId]);
-  return { exercises, isLoading, error, reload: load, addExercise };
+  const updateExercise = useCallback(async (exerciseId: string, changes: Database["public"]["Tables"]["plan_exercises"]["Update"]) => {
+    if (!supabase || !planDayId || !userId) throw new Error("You must be signed in.");
+    const result = await supabase.from("plan_exercises").update(changes).eq("id", exerciseId).eq("plan_day_id", planDayId).select().single();
+    if (result.error) throw result.error;
+    setExercises((current) => current.map((exercise) => exercise.id === exerciseId ? result.data : exercise).sort((a, b) => a.sort_order - b.sort_order));
+    return result.data;
+  }, [planDayId, userId]);
+  const deleteExercise = useCallback(async (exerciseId: string) => {
+    if (!supabase || !planDayId || !userId) throw new Error("You must be signed in.");
+    const result = await supabase.from("plan_exercises").delete().eq("id", exerciseId).eq("plan_day_id", planDayId);
+    if (result.error) throw result.error;
+    setExercises((current) => current.filter((exercise) => exercise.id !== exerciseId));
+  }, [planDayId, userId]);
+  return { exercises, isLoading, error, reload: load, addExercise, updateExercise, deleteExercise };
 }
 
 export function useCompletedSets(userId: string | undefined) {

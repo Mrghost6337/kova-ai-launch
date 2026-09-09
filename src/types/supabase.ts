@@ -48,6 +48,7 @@ export type Database = {
           source: "ai" | "manual";
           status: "draft" | "active" | "archived";
           onboarding_answers: Json;
+          is_public: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -58,6 +59,7 @@ export type Database = {
           source: "ai" | "manual";
           status?: "draft" | "active" | "archived";
           onboarding_answers?: Json;
+          is_public?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -66,6 +68,7 @@ export type Database = {
           source?: "ai" | "manual";
           status?: "draft" | "active" | "archived";
           onboarding_answers?: Json;
+          is_public?: boolean;
           updated_at?: string;
         };
         Relationships: [];
@@ -157,6 +160,89 @@ export type Database = {
           weight?: number | null;
           reps?: number | null;
           effort?: number | null;
+        };
+        Relationships: [];
+      };
+      follows: {
+        Row: {
+          follower_id: string;
+          following_id: string;
+          created_at: string;
+        };
+        Insert: {
+          follower_id: string;
+          following_id: string;
+          created_at?: string;
+        };
+        Update: {
+          follower_id?: string;
+          following_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      workout_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          notes: string | null;
+          completed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          notes?: string | null;
+          completed_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          title?: string;
+          notes?: string | null;
+          completed_at?: string;
+        };
+        Relationships: [];
+      };
+      session_likes: {
+        Row: {
+          session_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          session_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          session_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      direct_messages: {
+        Row: {
+          id: string;
+          sender_id: string;
+          recipient_id: string;
+          body: string;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          sender_id: string;
+          recipient_id: string;
+          body: string;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          body?: string;
+          read_at?: string | null;
         };
         Relationships: [];
       };

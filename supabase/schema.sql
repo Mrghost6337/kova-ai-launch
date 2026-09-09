@@ -152,3 +152,83 @@ create policy "Users can manage exercises in own plan days" on public.plan_exerc
 );
 drop policy if exists "Users can manage own completed sets" on public.completed_sets;
 create policy "Users can manage own completed sets" on public.completed_sets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Social layer for public profiles, follows, workout sessions, likes and direct messages.
+-- Safe to run after the original KOVA schema; every statement is idempotent.
+create table if not exists public.follows (
+  follower_id uuid not null references auth.users(id) on delete cascade,
+  following_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (follower_id, following_id),
+  check (follower_id <> following_id)
+);
+
+create table if not exists public.workout_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  notes text,
+  completed_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.session_likes (
+  session_id uuid not null references public.workout_sessions(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (session_id, user_id)
+);
+
+create table if not exists public.direct_messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references auth.users(id) on delete cascade,
+  recipient_id uuid not null references auth.users(id) on delete cascade,
+  body text not null check (char_length(trim(body)) between 1 and 2000),
+  read_at timestamptz,
+  created_at timestamptz not null default now(),
+  check (sender_id <> recipient_id)
+);
+
+create index if not exists follows_following_id_idx on public.follows(following_id);
+create index if not exists workout_sessions_user_id_idx on public.workout_sessions(user_id, completed_at desc);
+create index if not exists session_likes_user_id_idx on public.session_likes(user_id);
+create index if not exists direct_messages_recipient_id_idx on public.direct_messages(recipient_id, created_at desc);
+
+alter table public.follows enable row level security;
+alter table public.workout_sessions enable row level security;
+alter table public.session_likes enable row level security;
+alter table public.direct_messages enable row level security;
+
+drop policy if exists "Users can manage own follows" on public.follows;
+create policy "Users can manage own follows" on public.follows for all using (auth.uid() = follower_id or auth.uid() = following_id) with check (auth.uid() = follower_id);
+drop policy if exists "Anyone can read follows for public profiles" on public.follows;
+create policy "Anyone can read follows for public profiles" on public.follows for select using (
+  exists (select 1 from public.profiles where profiles.id = follows.following_id and profiles.is_public = true)
+);
+
+drop policy if exists "Public profiles can show sessions" on public.workout_sessions;
+create policy "Public profiles can show sessions" on public.workout_sessions for select using (
+  auth.uid() = user_id or exists (select 1 from public.profiles where profiles.id = workout_sessions.user_id and profiles.is_public = true)
+);
+drop policy if exists "Users can create own sessions" on public.workout_sessions;
+create policy "Users can create own sessions" on public.workout_sessions for insert with check (auth.uid() = user_id);
+drop policy if exists "Users can update own sessions" on public.workout_sessions;
+create policy "Users can update own sessions" on public.workout_sessions for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "Users can delete own sessions" on public.workout_sessions;
+create policy "Users can delete own sessions" on public.workout_sessions for delete using (auth.uid() = user_id);
+
+drop policy if exists "Anyone can read likes on public sessions" on public.session_likes;
+create policy "Anyone can read likes on public sessions" on public.session_likes for select using (
+  exists (select 1 from public.workout_sessions join public.profiles on profiles.id = workout_sessions.user_id where workout_sessions.id = session_likes.session_id and (workout_sessions.user_id = auth.uid() or profiles.is_public = true))
+);
+drop policy if exists "Users can manage own likes" on public.session_likes;
+create policy "Users can manage own likes" on public.session_likes for insert with check (auth.uid() = user_id);
+drop policy if exists "Users can remove own likes" on public.session_likes;
+create policy "Users can remove own likes" on public.session_likes for delete using (auth.uid() = user_id);
+
+drop policy if exists "Users can read own messages" on public.direct_messages;
+create policy "Users can read own messages" on public.direct_messages for select using (auth.uid() = sender_id or auth.uid() = recipient_id);
+drop policy if exists "Users can send messages" on public.direct_messages;
+create policy "Users can send messages" on public.direct_messages for insert with check (auth.uid() = sender_id);
+drop policy if exists "Recipients can mark messages read" on public.direct_messages;
+create policy "Recipients can mark messages read" on public.direct_messages for update using (auth.uid() = recipient_id) with check (auth.uid() = recipient_id);
