@@ -40,10 +40,10 @@ export function Hero() {
           <span>KOVA AI · Your training, adapted to you</span>
         </motion.div>
         <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.85, delay: 0.42, ease }} className="max-w-4xl font-serif text-[clamp(4rem,10vw,8.9rem)] leading-[0.83] tracking-[-0.07em] text-white">
-          Train smarter.<br /><em className="text-white/62">Get stronger.</em>
+          KOVA AI.<br /><em className="text-white/62">Your AI fitness coach.</em>
         </motion.h1>
         <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.64, ease }} className="mt-9 max-w-xl text-sm leading-7 text-white/52 sm:mt-11 sm:text-base">
-          KOVA builds your workout, guides each set, and changes your plan as you progress.
+          Personalized workout plans for strength training and hypertrophy — guided set by set, adapted to your progress, with real progress tracking.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.78, ease }} className="mt-9 flex flex-col items-center gap-3 sm:mt-10 sm:flex-row">
           <button type="button" onClick={() => navigate("/app")} className="group inline-flex h-12 items-center gap-3 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-[0.12em] text-black transition-transform hover:scale-[1.03]">

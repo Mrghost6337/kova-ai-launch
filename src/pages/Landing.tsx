@@ -18,8 +18,8 @@ export default function Landing() {
   return (
     <main id="top" className="relative isolate min-h-screen overflow-hidden bg-black text-white">
       <Seo
-        title="KOVA AI — Adaptive AI Strength Training for iPhone"
-        description="KOVA builds your workout, guides every set, and adapts your plan as you progress. Built for beginners and lifters."
+        title="KOVA AI — Your Personal AI Fitness Coach"
+        description="KOVA AI is your personal AI fitness coach for personalized workout plans, strength training, hypertrophy, progress tracking, and smarter training."
         path="/"
       />
       <KovaBackground />

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const SITE_URL = "https://kova.ai";
+const SITE_URL = "https://kovaai.dev";
 
 type SeoProps = {
   title: string;
