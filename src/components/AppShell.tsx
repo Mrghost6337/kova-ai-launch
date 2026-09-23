@@ -15,6 +15,8 @@ import {
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import { KovaLogo } from "@/components/KovaLogo";
+import { MobileNav } from "@/components/mobile/MobileNav";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useTheme } from "@/hooks/use-theme";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { useKovaProfile } from "@/hooks/use-kova-app";
@@ -46,6 +48,14 @@ function initials(name: string) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile();
+  const shell = useDashboardShell();
+  if (isMobile) return <MobileShell>{children}</MobileShell>;
+  return shell;
+}
+
+/** The existing desktop/tablet shell — unchanged. */
+function useDashboardShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -78,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const closeOnOutsideClick = (event: MouseEvent) => {
       if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
         setAccountOpen(false);
-      }
+    }
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
@@ -225,6 +235,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="px-5 py-8 sm:px-8 sm:py-10 lg:px-10">{children}</main>
       </div>
+    </div>
+  );
+}
+
+/** The new mobile app shell — activates only on phones (≤767px). */
+function MobileShell({ children }: { children: React.ReactNode }) {
+  const { user, signOut } = useSupabaseAuth();
+  const { profile } = useKovaProfile(user?.id);
+  const { resolved } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const metadata = user?.user_metadata as Record<string, unknown> | undefined;
+  const displayName =
+    typeof metadata?.display_name === "string" && metadata.display_name.trim()
+      ? metadata.display_name
+      : user?.email?.split("@")[0] || "Athlete";
+  const avatarUrl = typeof metadata?.avatar_url === "string" ? metadata.avatar_url : profile?.avatar_url || "";
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [location.pathname]);
+
+  return (
+    <div className={`app-shell app-shell--mobile min-h-[100dvh] bg-[var(--app-bg)] text-white ${resolved === "light" ? "light" : ""}`}>
+      {/* Compact top bar */}
+      <header className="mobile-topbar sticky top-0 z-30 flex h-[56px] items-center justify-between px-5">
+        <button type="button" onClick={() => navigate("/dashboard")} className="flex items-center gap-2.5">
+          <KovaLogo className="size-7 rounded-[23%] ring-1 ring-white/15" />
+          <span className="text-xs font-semibold uppercase tracking-[0.22em]">KOVA AI</span>
+        </button>
+        <button type="button" onClick={() => navigate("/dashboard/profile")} aria-label="Open profile" className="flex items-center">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="size-8 rounded-full border border-white/15 object-cover" />
+          ) : (
+            <span className="flex size-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-[10px] font-semibold text-white/80">{initials(displayName)}</span>
+          )}
+        </button>
+      </header>
+
+      <main className="mobile-content px-4 pb-28 pt-2">{children}</main>
+      <MobileNav />
     </div>
   );
 }
