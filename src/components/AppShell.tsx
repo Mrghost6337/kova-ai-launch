@@ -48,6 +48,7 @@ function initials(name: string) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useSupabaseAuth();
   const { profile } = useKovaProfile(user?.id);
@@ -65,6 +66,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setAccountOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
@@ -85,7 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={`app-shell min-h-screen bg-[var(--app-bg)] text-white ${resolved === "light" ? "light" : ""}`}>
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-white/[0.08] bg-black/90 p-5 backdrop-blur-2xl transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`app-sidebar fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col p-5 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between">
           <button
@@ -201,7 +209,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {mobileOpen && <button type="button" aria-label="Close navigation overlay" onClick={closeMobile} className="fixed inset-0 z-40 bg-black/60 lg:hidden" />}
 
       <div className="lg:pl-[264px]">
-        <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between border-b border-white/[0.07] bg-black/55 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
+        <header
+          className={`app-navbar sticky top-0 z-30 flex h-[72px] items-center justify-between px-5 sm:px-8 lg:px-10 ${scrolled ? "app-navbar--scrolled" : ""}`}
+        >
           <button type="button" onClick={() => setMobileOpen(true)} className="flex items-center gap-3 lg:hidden">
             <KovaLogo className="size-8 rounded-[23%] ring-1 ring-white/15" />
             <span className="text-xs font-semibold uppercase tracking-[0.22em]">KOVA AI</span>

@@ -74,6 +74,8 @@
   --glass-inset: rgba(255, 255, 255, 0.12);
   --glass-shadow: rgba(0, 0, 0, 0.3);
   --glass-shine: rgba(255, 255, 255, 0.045);
+  --glass-nav: rgba(7, 7, 7, 0.78);
+  --glass-bar: rgba(7, 7, 7, 0.6);
 
   /* Subtle dashboard accents (dark theme = luminous, light theme = deep). */
   --accent-amber: #f0b429;
@@ -114,6 +116,8 @@
   --glass-inset: rgba(255, 255, 255, 0.85);
   --glass-shadow: rgba(18, 18, 22, 0.08);
   --glass-shine: rgba(255, 255, 255, 0.55);
+  --glass-nav: rgba(255, 255, 255, 0.78);
+  --glass-bar: rgba(251, 251, 250, 0.62);
 
   --accent-amber: #b45309;
   --accent-emerald: #047857;
@@ -205,6 +209,58 @@ input:focus-visible {
 
 .light .glass-pill {
   background: rgba(255, 255, 255, 0.65);
+}
+
+/* App navigation surfaces — liquid glass that animates in on scroll. */
+.app-sidebar {
+  background: var(--glass-nav);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border-right: 1px solid var(--glass-border);
+}
+
+.app-navbar {
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  backdrop-filter: blur(0px) saturate(120%);
+  -webkit-backdrop-filter: blur(0px) saturate(120%);
+  transition:
+    background-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    backdrop-filter 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    -webkit-backdrop-filter 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Feathered blur edge: content dissolves softly as it slides under the bar. */
+.app-navbar::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 28px;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-navbar--scrolled {
+  background: var(--glass-bar);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-bottom-color: var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-inset),
+    0 14px 44px var(--glass-shadow);
+}
+
+.app-navbar--scrolled::after {
+  opacity: 1;
 }
 
 .section-shell {
