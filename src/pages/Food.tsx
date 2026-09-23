@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Apple,
-  Beef,
-  Calculator,
+  ArrowLeft,
+  ArrowRight,
   Check,
   ChefHat,
-  ChevronDown,
   Flame,
   Loader2,
   Plus,
+  Sparkles,
   Trash2,
   UtensilsCrossed,
 } from "lucide-react";
@@ -31,12 +32,14 @@ const MEALS: Array<{ key: Meal; label: string; icon: typeof Apple }> = [
 ];
 
 const ACTIVITIES: Array<{ key: Activity; label: string; hint: string }> = [
-  { key: "sedentary", label: "Sedentary", hint: "Desk work, little movement" },
-  { key: "light", label: "Lightly active", hint: "Light exercise 1–3 days/week" },
-  { key: "moderate", label: "Moderately active", hint: "Training 3–5 days/week" },
-  { key: "active", label: "Very active", hint: "Training 6–7 days/week" },
-  { key: "athlete", label: "Athlete", hint: "Twice-daily or physical job" },
+  { key: "sedentary", label: "Mostly sitting", hint: "Desk or study, little movement" },
+  { key: "light", label: "Lightly active", hint: "Some walking, 1–2 workouts a week" },
+  { key: "moderate", label: "Moderately active", hint: "Training about 3–4 days a week" },
+  { key: "active", label: "Very active", hint: "Training 5–6 days a week" },
+  { key: "athlete", label: "Athlete", hint: "Daily training or a physical job" },
 ];
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 function MacroBar({ label, value, target, color }: { label: string; value: number; target: number; color: string }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -55,116 +58,215 @@ function MacroBar({ label, value, target, color }: { label: string; value: numbe
   );
 }
 
-function SetupForm({ onDone }: { onDone: (input: NutritionTargetInput) => void }) {
-  const [sex, setSex] = useState<Sex>("male");
-  const [age, setAge] = useState("25");
-  const [height, setHeight] = useState("180");
-  const [weight, setWeight] = useState("75");
-  const [activity, setActivity] = useState<Activity>("moderate");
-  const [goal, setGoal] = useState<Goal>("build_muscle");
+/* ---------------- Onboarding: a focused, multi-step setup overlay ---------------- */
 
-  const preview = useMemo(
-    () =>
-      computeTargets({
-        sex,
-        age: Math.max(10, Math.min(100, Number(age) || 25)),
-        heightCm: Math.max(100, Math.min(250, Number(height) || 180)),
-        weightKg: Math.max(30, Math.min(300, Number(weight) || 75)),
-        activity,
-        goal,
-      }),
-    [sex, age, height, weight, activity, goal],
-  );
-
-  const chip = (active: boolean) =>
-    cn(
-      "rounded-full border px-4 py-2 text-xs transition-colors",
-      active ? "border-white bg-white text-black" : "border-white/10 text-white/50 hover:bg-white/[0.06] hover:text-white",
-    );
-
+function StepShell({ step, total, title, hint, children }: { step: number; total: number; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6 sm:p-8">
-      <div className="flex items-center gap-3">
-        <Calculator className="size-5 text-kova-amber" />
-        <h2 className="font-serif text-3xl italic">Set your nutrition targets.</h2>
+    <motion.div key={step} initial={{ opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -28 }} transition={{ duration: 0.35, ease }}>
+      <div className="mt-6 flex items-center gap-1.5">
+        {Array.from({ length: total }, (_, index) => (
+          <span key={index} className={cn("h-1 flex-1 rounded-full transition-colors duration-300", index <= step ? "bg-white" : "bg-white/12")} />
+        ))}
       </div>
-      <p className="mt-3 text-sm leading-6 text-white/40">
-        KOVA calculates your calories and macros with the Mifflin-St Jeor formula — the same science a coach would use. Everything is saved to your profile and editable later.
-      </p>
+      <h2 className="mt-7 font-serif text-4xl italic tracking-[-0.05em] sm:text-5xl">{title}</h2>
+      {hint ? <p className="mt-3 text-sm leading-6 text-white/45">{hint}</p> : null}
+      <div className="mt-7">{children}</div>
+    </motion.div>
+  );
+}
 
-      <div className="mt-7 space-y-5">
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.16em] text-white/35">Sex</p>
-          <div className="flex gap-2">
-            {(["male", "female"] as Sex[]).map((option) => (
-              <button key={option} type="button" onClick={() => setSex(option)} className={chip(sex === option)}>
-                {option === "male" ? "Male" : "Female"}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <label className="block">
-            <span className="mb-2 block text-xs text-white/45">Age</span>
-            <input type="number" min={10} max={100} value={age} onChange={(event) => setAge(event.target.value)} className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none focus:border-white/30" />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs text-white/45">Height (cm)</span>
-            <input type="number" min={100} max={250} value={height} onChange={(event) => setHeight(event.target.value)} className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none focus:border-white/30" />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs text-white/45">Weight (kg)</span>
-            <input type="number" min={30} max={300} value={weight} onChange={(event) => setWeight(event.target.value)} className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none focus:border-white/30" />
-          </label>
-        </div>
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.16em] text-white/35">Activity level</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {ACTIVITIES.map((option) => (
-              <button key={option.key} type="button" onClick={() => setActivity(option.key)} className={cn("rounded-2xl border p-3.5 text-left transition-colors", activity === option.key ? "border-white/40 bg-white/[0.08]" : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]")}>
-                <span className="block text-sm text-white/80">{option.label}</span>
-                <span className="mt-0.5 block text-xs text-white/35">{option.hint}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.16em] text-white/35">Goal</p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setGoal("lose_fat")} className={chip(goal === "lose_fat")}>Lose fat</button>
-            <button type="button" onClick={() => setGoal("maintain")} className={chip(goal === "maintain")}>Maintain</button>
-            <button type="button" onClick={() => setGoal("build_muscle")} className={chip(goal === "build_muscle")}>Build muscle</button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 sm:grid-cols-4">
-          <div><p className="text-[10px] uppercase tracking-[0.14em] text-white/30">Calories</p><p className="mt-1 text-xl font-semibold text-kova-amber">{preview.calorie_target}</p></div>
-          <div><p className="text-[10px] uppercase tracking-[0.14em] text-white/30">Protein</p><p className="mt-1 text-xl font-semibold text-kova-rose">{preview.protein_target}g</p></div>
-          <div><p className="text-[10px] uppercase tracking-[0.14em] text-white/30">Carbs</p><p className="mt-1 text-xl font-semibold text-kova-sky">{preview.carb_target}g</p></div>
-          <div><p className="text-[10px] uppercase tracking-[0.14em] text-white/30">Fat</p><p className="mt-1 text-xl font-semibold text-kova-emerald">{preview.fat_target}g</p></div>
-        </div>
-
+function OptionGrid<T extends string>({ options, value, onSelect }: { options: Array<{ key: T; label: string; hint?: string }>; value: T | null; onSelect: (key: T) => void }) {
+  return (
+    <div className="grid gap-2">
+      {options.map((option) => (
         <button
+          key={option.key}
           type="button"
-          onClick={() =>
-            onDone({
-              sex,
-              age: Math.max(10, Math.min(100, Number(age) || 25)),
-              height_cm: Math.max(100, Math.min(250, Number(height) || 180)),
-              weight_kg: Math.max(30, Math.min(300, Number(weight) || 75)),
-              activity,
-              goal,
-              ...preview,
-            })
-          }
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-sm font-semibold text-black sm:w-auto sm:px-8"
+          onClick={() => onSelect(option.key)}
+          className={cn(
+            "flex items-center justify-between rounded-2xl border px-4 py-3.5 text-left transition-colors",
+            value === option.key ? "border-white/55 bg-white text-black" : "border-white/10 bg-white/[0.025] text-white/70 hover:bg-white/[0.07]",
+          )}
         >
-          Save my targets <Check className="size-4" />
+          <span>
+            <span className="block text-sm font-medium">{option.label}</span>
+            {option.hint ? <span className={cn("mt-0.5 block text-xs", value === option.key ? "text-black/55" : "text-white/35")}>{option.hint}</span> : null}
+          </span>
+          {value === option.key ? <Check className="size-4" /> : null}
         </button>
-      </div>
+      ))}
     </div>
   );
 }
+
+function NumberStepper({ value, onChange, min, max, unit, step = 1 }: { value: number; onChange: (next: number) => void; min: number; max: number; unit: string; step?: number }) {
+  const clamp = (next: number) => Math.min(max, Math.max(min, next));
+  return (
+    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+      <button type="button" onClick={() => onChange(clamp(value - step))} className="flex size-12 items-center justify-center rounded-full border border-white/10 text-xl text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white" aria-label={`Decrease ${unit}`}>−</button>
+      <div className="text-center">
+        <span className="text-4xl font-semibold tracking-tight text-white">{value}</span>
+        <span className="ml-1.5 text-sm text-white/40">{unit}</span>
+      </div>
+      <button type="button" onClick={() => onChange(clamp(value + step))} className="flex size-12 items-center justify-center rounded-full border border-white/10 text-xl text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white" aria-label={`Increase ${unit}`}>+</button>
+    </div>
+  );
+}
+
+const ONBOARDING_STEPS = 6;
+
+function OnboardingOverlay({ onDone, saving, error }: { onDone: (input: NutritionTargetInput) => void; saving: boolean; error: string | null }) {
+  const [step, setStep] = useState(0);
+  const [sex, setSex] = useState<Sex | null>(null);
+  const [age, setAge] = useState(25);
+  const [heightCm, setHeightCm] = useState(180);
+  const [weightKg, setWeightKg] = useState(75);
+  const [activity, setActivity] = useState<Activity | null>(null);
+  const [goal, setGoal] = useState<Goal | null>(null);
+
+  const canContinue =
+    (step === 0 && sex !== null) ||
+    (step === 1 && age >= 10) ||
+    (step === 2 && heightCm >= 100) ||
+    (step === 3 && weightKg >= 30) ||
+    (step === 4 && activity !== null) ||
+    (step === 5 && goal !== null);
+
+  const preview = useMemo(
+    () =>
+      sex && activity && goal
+        ? computeTargets({ sex, age, heightCm, weightKg, activity, goal })
+        : null,
+    [sex, age, heightCm, weightKg, activity, goal],
+  );
+
+  const finish = () => {
+    if (!sex || !activity || !goal) return;
+    onDone({
+      sex,
+      age,
+      height_cm: heightCm,
+      weight_kg: weightKg,
+      activity,
+      goal,
+      ...computeTargets({ sex, age, heightCm, weightKg, activity, goal }),
+    });
+  };
+
+  const next = () => {
+    if (step < ONBOARDING_STEPS - 1) setStep((value) => value + 1);
+    else finish();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-10 backdrop-blur-2xl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Nutrition setup"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 26, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease }}
+        className="liquid-glass w-full max-w-lg rounded-[2rem] border-white/15 bg-[var(--surface-solid)] p-6 sm:p-9"
+      >
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45">
+            <Sparkles className="size-3.5 text-kova-amber" />KOVA Nutrition setup
+          </span>
+          <span className="text-[10px] uppercase tracking-[0.16em] text-white/30">{step + 1} / {ONBOARDING_STEPS}</span>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {step === 0 && (
+            <StepShell key="s0" step={0} total={ONBOARDING_STEPS} title="What is your sex?" hint="Used for the calorie formula — nothing else.">
+              <OptionGrid
+                options={[{ key: "male" as Sex, label: "Male" }, { key: "female" as Sex, label: "Female" }]}
+                value={sex}
+                onSelect={setSex}
+              />
+            </StepShell>
+          )}
+          {step === 1 && (
+            <StepShell key="s1" step={1} total={ONBOARDING_STEPS} title="How old are you?">
+              <NumberStepper value={age} onChange={setAge} min={10} max={100} unit="years" />
+            </StepShell>
+          )}
+          {step === 2 && (
+            <StepShell key="s2" step={2} total={ONBOARDING_STEPS} title="How tall are you?">
+              <NumberStepper value={heightCm} onChange={setHeightCm} min={100} max={250} unit="cm" />
+            </StepShell>
+          )}
+          {step === 3 && (
+            <StepShell key="s3" step={3} total={ONBOARDING_STEPS} title="What do you weigh?" hint="A close estimate is fine — you can update it later.">
+              <NumberStepper value={weightKg} onChange={setWeightKg} min={30} max={300} unit="kg" />
+            </StepShell>
+          )}
+          {step === 4 && (
+            <StepShell key="s4" step={4} total={ONBOARDING_STEPS} title="How active are you?" hint="Outside of your workouts — work, study, daily movement.">
+              <OptionGrid options={ACTIVITIES} value={activity} onSelect={setActivity} />
+            </StepShell>
+          )}
+          {step === 5 && (
+            <StepShell key="s5" step={5} total={ONBOARDING_STEPS} title="What is your goal?">
+              <OptionGrid
+                options={[
+                  { key: "lose_fat" as Goal, label: "Lose fat", hint: "A moderate calorie deficit" },
+                  { key: "maintain" as Goal, label: "Maintain", hint: "Stay at your current weight" },
+                  { key: "build_muscle" as Goal, label: "Build muscle", hint: "A small calorie surplus" },
+                ]}
+                value={goal}
+                onSelect={setGoal}
+              />
+              {preview && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-5 grid grid-cols-4 gap-2 rounded-2xl border border-white/10 bg-black/25 p-4 text-center">
+                  <div><p className="text-[9px] uppercase tracking-[0.14em] text-white/30">kcal</p><p className="mt-1 text-lg font-semibold text-kova-amber">{preview.calorie_target}</p></div>
+                  <div><p className="text-[9px] uppercase tracking-[0.14em] text-white/30">protein</p><p className="mt-1 text-lg font-semibold text-kova-rose">{preview.protein_target}g</p></div>
+                  <div><p className="text-[9px] uppercase tracking-[0.14em] text-white/30">carbs</p><p className="mt-1 text-lg font-semibold text-kova-sky">{preview.carb_target}g</p></div>
+                  <div><p className="text-[9px] uppercase tracking-[0.14em] text-white/30">fat</p><p className="mt-1 text-lg font-semibold text-kova-emerald">{preview.fat_target}g</p></div>
+                </motion.div>
+              )}
+            </StepShell>
+          )}
+        </AnimatePresence>
+
+        {error && <p className="mt-4 text-sm text-red-200">{error}</p>}
+
+        <div className="mt-8 flex items-center gap-3">
+          {step > 0 && (
+            <button type="button" onClick={() => setStep((value) => value - 1)} disabled={saving} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/12 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 transition-colors hover:text-white disabled:opacity-40">
+              <ArrowLeft className="size-4" />Back
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={next}
+            disabled={!canContinue || saving}
+            className="group inline-flex h-12 flex-1 items-center justify-center gap-3 rounded-full bg-white text-xs font-semibold uppercase tracking-[0.12em] text-black transition-opacity disabled:opacity-30"
+          >
+            {saving ? (
+              <><Loader2 className="size-4 animate-spin" />Calculating…</>
+            ) : step === ONBOARDING_STEPS - 1 ? (
+              <>Set my targets<Check className="size-4" /></>
+            ) : (
+              <>Continue<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></>
+            )}
+          </button>
+        </div>
+        <p className="mt-5 text-center text-[11px] leading-5 text-white/30">
+          Calculated with the Mifflin-St Jeor formula — the standard a dietitian would use. Saved to your profile, editable anytime.
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ---------------- Page ---------------- */
 
 export default function Food() {
   const { user } = useSupabaseAuth();
@@ -172,6 +274,7 @@ export default function Food() {
   const [date, setDate] = useState(todayKey());
   const { entries, isLoading: entriesLoading, error: entriesError, addEntry, removeEntry } = useFoodEntries(user?.id, date);
   const [showSetup, setShowSetup] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [meal, setMeal] = useState<Meal>("breakfast");
   const [name, setName] = useState("");
@@ -227,6 +330,13 @@ export default function Food() {
     }
   };
 
+  const handleSetupDone = (input: NutritionTargetInput) => {
+    setSaveError(null);
+    void save(input)
+      .then(() => setShowSetup(false))
+      .catch((cause) => setSaveError(cause instanceof Error ? cause.message : "Could not save your targets."));
+  };
+
   const dayLabel = new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const caloriePct = targets ? Math.min(100, Math.round((totals.calories / targets.calorie_target) * 100)) : 0;
   const over = targets ? totals.calories > targets.calorie_target : false;
@@ -234,15 +344,21 @@ export default function Food() {
   return (
     <AppShell>
       <Seo title="Food — KOVA AI" description="Nutrition targets and a real food log connected to your KOVA training." path="/dashboard/food" />
+      <AnimatePresence>
+        {showSetup && !targetsLoading && (
+          <OnboardingOverlay onDone={handleSetupDone} saving={targetsLoading} error={saveError} />
+        )}
+      </AnimatePresence>
+
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
             <p className="eyebrow">Nutrition</p>
             <h1 className="mt-3 font-serif text-6xl italic tracking-[-0.08em]">Food.</h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-white/45">Real macro targets and a daily log. Everything saved to your Supabase profile — no fake numbers.</p>
+            <p className="mt-4 max-w-lg text-sm leading-6 text-white/45">Real macro targets and a daily log. Everything saved to your profile — no fake numbers.</p>
           </div>
           <button type="button" onClick={() => setShowSetup(true)} className="inline-flex h-11 items-center gap-2 self-start rounded-full border border-white/15 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-white hover:bg-white/[0.06]">
-            <Calculator className="size-4" />Recalculate targets
+            <Sparkles className="size-4" />Recalculate targets
           </button>
         </div>
 
@@ -250,9 +366,14 @@ export default function Food() {
 
         {targetsLoading ? (
           <p className="mt-12 flex items-center gap-2 text-sm text-white/40"><Loader2 className="size-4 animate-spin" />Loading your nutrition…</p>
-        ) : showSetup || !targets ? (
-          <div className="mt-10">
-            <SetupForm onDone={(input) => void save(input).then(() => setShowSetup(false)).catch(() => undefined)} />
+        ) : !targets ? (
+          <div className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.03] p-8 text-center sm:p-14">
+            <Sparkles className="mx-auto size-6 text-kova-amber" />
+            <h2 className="mt-6 font-serif text-4xl italic tracking-[-0.05em]">Let's set your nutrition.</h2>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-white/45">Six quick questions — height, weight, activity and goal. KOVA turns them into daily calorie and macro targets.</p>
+            <button type="button" onClick={() => setShowSetup(true)} className="mt-8 inline-flex h-12 items-center gap-3 rounded-full bg-white px-7 text-xs font-semibold uppercase tracking-[0.12em] text-black">
+              Start setup<ArrowRight className="size-4" />
+            </button>
           </div>
         ) : (
           <>
@@ -363,6 +484,7 @@ export default function Food() {
               })}
             </div>
 
+            {entriesLoading && <p className="mt-6 flex items-center gap-2 text-sm text-white/40"><Loader2 className="size-4 animate-spin" />Loading your log…</p>}
             {entriesError && <p className="mt-6 text-sm text-red-200">Could not load your log: {entriesError}</p>}
           </>
         )}

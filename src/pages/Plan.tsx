@@ -127,7 +127,7 @@ export default function Plan() {
           sets: item.sets,
           reps: item.reps,
           rest_seconds: item.restSeconds,
-          notes: null,
+          notes: item.note ?? null,
         })),
       );
       const validRows = exerciseRows.filter((row): row is typeof row & { plan_day_id: string } => Boolean(row.plan_day_id));

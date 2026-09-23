@@ -5,8 +5,18 @@ import { loadExercises, searchExercises, type Exercise } from "@/lib/exercises";
  *
  * Turns the onboarding answers into a real, structured training plan using the
  * actual exercise catalog (real names, GIFs, instructions). Deterministic: same
- * answers produce the same plan. Nothing is invented — movements come from the
- * catalog and only exercises matching the available equipment are used.
+ * answers produce the same plan. Programming follows standard strength &
+ * conditioning practice:
+ * - Sessions are built around movement patterns (squat, hinge, push, pull...),
+ *   compound lifts first, isolation later.
+ * - Rep ranges and rest scale with the goal: strength 3–6 reps with long rest,
+ *   muscle growth 6–12 on compounds / 10–15 on isolation, fat loss and
+ *   endurance higher reps with short rest.
+ * - Arm work matches the session type: triceps on push days, biceps on pull days.
+ * - Beginners get machine/dumbbell-first picks and lower volume; advanced
+ *   lifters get barbell-first picks and more sets.
+ * - Only exercises matching the available equipment are used, and movements the
+ *   athlete flagged (limitations/preferences) are excluded.
  */
 
 export type PlanBlueprint = {
@@ -22,25 +32,27 @@ export type PlanBlueprint = {
 };
 
 type Answers = Record<string, string>;
+type Experience = "beginner" | "intermediate" | "advanced";
 
 const WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 /** Muscle-group slots each workout fills, ordered by training priority. */
 type Slot =
   | "push"
-  | "pull"
-  | "squat"
-  | "hinge"
-  | "core"
   | "horizontal-push"
+  | "chest-fly"
+  | "pull"
   | "vertical-pull"
   | "shoulders"
-  | "arms"
-  | "glutes"
-  | "conditioning"
-  | "mobility"
+  | "biceps"
+  | "triceps"
+  | "squat"
   | "single-leg"
-  | "chest-fly";
+  | "hinge"
+  | "glutes"
+  | "core"
+  | "conditioning"
+  | "mobility";
 
 const SLOT_QUERIES: Record<Slot, string> = {
   push: "chest",
@@ -49,7 +61,8 @@ const SLOT_QUERIES: Record<Slot, string> = {
   pull: "back",
   "vertical-pull": "lat",
   shoulders: "shoulders",
-  arms: "biceps",
+  biceps: "biceps",
+  triceps: "triceps",
   squat: "quadriceps",
   "single-leg": "quadriceps",
   hinge: "hamstrings",
@@ -59,12 +72,8 @@ const SLOT_QUERIES: Record<Slot, string> = {
   mobility: "stretching",
 };
 
-const EQUIPMENT_BLOCKERS: Partial<Record<Slot, string[]>> = {
-  push: ["barbell", "dumbbell", "machine", "bodyweight", "cable"],
-  squat: ["barbell", "dumbbell", "machine", "bodyweight"],
-  hinge: ["barbell", "dumbbell", "machine", "band"],
-  "vertical-pull": ["cable", "machine", "band", "bodyweight"],
-};
+/** Slots that load the spine or move heavy load — these get the lower-rep schemes. */
+const COMPOUND_SLOTS: Slot[] = ["push", "horizontal-push", "pull", "vertical-pull", "squat", "single-leg", "hinge", "shoulders"];
 
 function hasEquipment(exercise: Exercise, location: string): boolean {
   const equipment = exercise.equipment.map((item) => item.toLowerCase());
@@ -77,7 +86,7 @@ function hasEquipment(exercise: Exercise, location: string): boolean {
   return equipment.every((item) => item === "bodyweight");
 }
 
-function pickBest(catalog: Exercise[], slot: Slot, answers: Answers, used: Set<string>): Exercise | null {
+function pickBest(catalog: Exercise[], slot: Slot, answers: Answers, used: Set<string>, experience: Experience): Exercise | null {
   const query = SLOT_QUERIES[slot];
   let pool = searchExercises(catalog, query);
   const location = answers.location ?? "Gym";
@@ -89,7 +98,7 @@ function pickBest(catalog: Exercise[], slot: Slot, answers: Answers, used: Set<s
   if (limitations || dislikes) {
     pool = pool.filter((exercise) => {
       const haystack = `${exercise.name} ${exercise.targetMuscles.join(" ")} ${exercise.equipment.join(" ")}`.toLowerCase();
-      for (const term of [...limitations.split(/[,\n.;]+/), ...dislikes.split(/[,\n.;]+/)]) {
+      for (const term of [...limitations.split(/[,\n.;]+/), ...dislikes.split(/[,.;\n]+/)]) {
         const clean = term.trim();
         if (clean.length > 2 && haystack.includes(clean)) return false;
       }
@@ -100,13 +109,14 @@ function pickBest(catalog: Exercise[], slot: Slot, answers: Answers, used: Set<s
   const fresh = pool.filter((exercise) => !used.has(exercise.id));
   const candidates = fresh.length ? fresh : pool;
   if (!candidates.length) return null;
-  // Deterministic pick: prefer compound barbell/dumbbell work first, then by name.
+  // Deterministic pick. Beginners learn on machines and dumbbells first (more
+  // stable, easier to groove); experienced lifters get barbell work first.
   const weight = (exercise: Exercise) => {
     const equipment = exercise.equipment.join(" ").toLowerCase();
     let score = 0;
-    if (equipment.includes("barbell")) score -= 3;
+    if (equipment.includes("barbell")) score += experience === "beginner" ? 2 : -3;
     if (equipment.includes("dumbbell")) score -= 2;
-    if (equipment.includes("machine") || equipment.includes("cable")) score -= 1;
+    if (equipment.includes("machine") || equipment.includes("cable")) score -= experience === "beginner" ? 3 : 1;
     if (exercise.bodyParts.includes("waist")) score -= 1;
     return score;
   };
@@ -128,7 +138,7 @@ function parseDays(answers: Answers): number {
   return 3;
 }
 
-function parseExperience(answers: Answers): "beginner" | "intermediate" | "advanced" {
+function parseExperience(answers: Answers): Experience {
   const value = (answers.experience ?? "").toLowerCase();
   if (value.includes("beginner") || value.includes("don't know") || value.includes("not yet")) return "beginner";
   if (value.includes("advanced")) return "advanced";
@@ -161,18 +171,47 @@ function chooseDayIndices(count: number, preferred: string): number[] {
   return merged.sort((a, b) => a - b).slice(0, count);
 }
 
-function setsAndReps(slot: Slot, experience: "beginner" | "intermediate" | "advanced", goal: string): { sets: number; reps: string; rest: number } {
+function setsAndReps(slot: Slot, experience: Experience, goal: string): { sets: number; reps: string; rest: number } {
+  const value = goal.toLowerCase();
+  const strengthGoal = /strength|strong/.test(value);
+  const enduranceGoal = /endurance/.test(value);
+  const fatLoss = /fat/.test(value);
   const isCore = slot === "core" || slot === "mobility" || slot === "conditioning";
-  if (goal.toLowerCase().includes("strength") && !isCore) {
+  const isCompound = COMPOUND_SLOTS.includes(slot);
+
+  // Core, conditioning and mobility work stays light and controlled.
+  if (isCore) return { sets: 3, reps: experience === "beginner" ? "10-12" : "12-15", rest: 45 };
+
+  // Maximal strength: low reps, full recovery between sets.
+  if (strengthGoal && isCompound) {
     return experience === "beginner" ? { sets: 3, reps: "5", rest: 150 } : { sets: 4, reps: "3-5", rest: 180 };
   }
-  if (goal.toLowerCase().includes("endurance")) {
-    return { sets: 3, reps: "12-15", rest: 45 };
+
+  // Fat loss and muscular endurance: denser sets, short rests, higher reps.
+  if (enduranceGoal || fatLoss) {
+    return isCompound ? { sets: 3, reps: "10-12", rest: 60 } : { sets: 3, reps: "12-15", rest: 45 };
   }
-  if (isCore) return { sets: 3, reps: experience === "beginner" ? "10-12" : "12-15", rest: 45 };
-  if (experience === "beginner") return { sets: 3, reps: "8-10", rest: 90 };
-  if (experience === "advanced") return { sets: 4, reps: "6-10", rest: 120 };
-  return { sets: 3, reps: "8-12", rest: 90 };
+
+  // Muscle growth (default): compounds heavier, isolation lighter with short rest.
+  if (isCompound) {
+    if (experience === "beginner") return { sets: 3, reps: "8-10", rest: 90 };
+    if (experience === "advanced") return { sets: 4, reps: "6-10", rest: 150 };
+    return { sets: 4, reps: "8-12", rest: 120 };
+  }
+  if (experience === "beginner") return { sets: 2, reps: "10-12", rest: 60 };
+  return { sets: 3, reps: "10-15", rest: 60 };
+}
+
+function slotNote(slot: Slot, experience: Experience): string {
+  if (COMPOUND_SLOTS.includes(slot)) {
+    return experience === "beginner"
+      ? "Main lift — start light and master the form; the weight will follow."
+      : "Main lift — add 2.5 kg once you complete every set with clean form.";
+  }
+  if (slot === "core" || slot === "conditioning" || slot === "mobility") {
+    return "Move with control — quality over speed.";
+  }
+  return "Isolation — keep 1–2 reps in reserve on every set.";
 }
 
 /** The split template per weekly training frequency. */
@@ -186,8 +225,8 @@ function splitFor(count: number, goal: string): Array<{ title: string; slots: Sl
   }
   if (count === 3) {
     return [
-      { title: "Push day", slots: ["horizontal-push", "chest-fly", "shoulders", "arms"] },
-      { title: "Pull day", slots: ["pull", "vertical-pull", "pull", "arms"] },
+      { title: "Push day", slots: ["horizontal-push", "chest-fly", "shoulders", "triceps"] },
+      { title: "Pull day", slots: ["pull", "vertical-pull", "pull", "biceps"] },
       { title: "Leg day", slots: ["squat", "hinge", "single-leg", "glutes", "core"] },
     ];
   }
@@ -195,24 +234,24 @@ function splitFor(count: number, goal: string): Array<{ title: string; slots: Sl
     return [
       { title: "Upper body strength", slots: ["push", "pull", "shoulders", "vertical-pull"] },
       { title: "Lower body strength", slots: ["squat", "hinge", "single-leg", "core"] },
-      { title: "Upper body volume", slots: ["horizontal-push", "vertical-pull", "chest-fly", "arms"] },
+      { title: "Upper body volume", slots: ["horizontal-push", "vertical-pull", "chest-fly", "triceps", "biceps"] },
       { title: "Lower body volume", slots: ["hinge", "glutes", "squat", "core"] },
     ];
   }
   if (count === 5) {
     return [
-      { title: "Push day", slots: ["horizontal-push", "chest-fly", "shoulders", "arms"] },
-      { title: "Pull day", slots: ["pull", "vertical-pull", "pull", "arms"] },
+      { title: "Push day", slots: ["horizontal-push", "chest-fly", "shoulders", "triceps"] },
+      { title: "Pull day", slots: ["pull", "vertical-pull", "pull", "biceps"] },
       { title: "Leg day", slots: ["squat", "hinge", "single-leg", "core"] },
-      { title: "Upper body pump", slots: ["push", "vertical-pull", "shoulders", "arms"] },
+      { title: "Upper body pump", slots: ["push", "vertical-pull", "triceps", "biceps"] },
       { title: "Glutes & core", slots: ["glutes", "hinge", "core", "conditioning"] },
     ];
   }
   return [
-    { title: "Push day", slots: ["horizontal-push", "chest-fly", "shoulders"] },
-    { title: "Pull day", slots: ["pull", "vertical-pull", "arms"] },
+    { title: "Push day", slots: ["horizontal-push", "chest-fly", "shoulders", "triceps"] },
+    { title: "Pull day", slots: ["pull", "vertical-pull", "biceps"] },
     { title: "Leg day", slots: ["squat", "hinge", "core"] },
-    { title: "Upper body volume", slots: ["horizontal-push", "vertical-pull", "arms"] },
+    { title: "Upper body volume", slots: ["horizontal-push", "vertical-pull", "triceps", "biceps"] },
     { title: "Lower body volume", slots: ["single-leg", "glutes", "core"] },
     { title: "Conditioning & core", slots: ["conditioning", "core", "mobility"] },
   ];
@@ -244,18 +283,18 @@ export async function generatePlanBlueprint(answers: Answers): Promise<PlanBluep
   const planDays = split.map((template, position) => {
     const exercises: PlanBlueprint["days"][number]["exercises"] = [];
     for (const slot of template.slots.slice(0, maxExercises)) {
-      const exercise = pickBest(catalog, slot, answers, used);
+      const exercise = pickBest(catalog, slot, answers, used, experience);
       if (!exercise) continue;
       used.add(exercise.id);
       const { sets, reps, rest } = setsAndReps(slot, experience, goal);
-      exercises.push({ exercise, sets, reps, restSeconds: rest });
+      exercises.push({ exercise, sets, reps, restSeconds: rest, note: slotNote(slot, experience) });
     }
     // Guarantee a usable session even when the catalog filter leaves gaps.
     if (!exercises.length) {
       const fallback = searchExercises(catalog, "bodyweight").slice(0, 4);
       for (const exercise of fallback) {
         const { sets, reps, rest } = setsAndReps("push", experience, goal);
-        exercises.push({ exercise, sets, reps, restSeconds: rest });
+        exercises.push({ exercise, sets, reps, restSeconds: rest, note: slotNote("push", experience) });
       }
     }
     return {
@@ -271,6 +310,7 @@ export async function generatePlanBlueprint(answers: Answers): Promise<PlanBluep
     `${days} training days per week around your schedule.`,
     `${experience === "beginner" ? "Technique-first" : experience === "advanced" ? "Performance-driven" : "Balanced"} sets and reps tuned for ${goal.toLowerCase()}.`,
     `Every workout fits inside ${duration} minutes.`,
+    "Progression: when you hit the top of a rep range on all sets, add 2.5–5 kg next session.",
     locationNote(answers),
   ];
 
