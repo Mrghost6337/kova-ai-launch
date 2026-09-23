@@ -248,7 +248,7 @@ export default function AppDashboard() {
               </motion.section>
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44 }} className="liquid-glass rounded-[1.5rem] p-5 sm:p-6">
                 <div className="flex items-center gap-2.5"><Utensils className="size-4 text-white/50" /><Label>Nutrition</Label></div>
-                <p className="mt-4 text-sm leading-6 text-white/45">No nutrition targets yet. Set calorie and protein goals in the Food tab when you are ready.</p>
+                <p className="mt-4 text-sm leading-6 text-white/45">No nutrition targets yet. Set calorie and protein goals on the <Link to="/dashboard/food" className="text-kova-amber underline underline-offset-2 hover:text-white">Food page</Link> when you are ready.</p>
               </motion.section>
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }} className="liquid-glass rounded-[1.5rem] border-kova-emerald/15 bg-kova-emerald/[0.035] p-5 sm:p-6">
                 <div className="flex items-center gap-2.5"><MapPin className="size-4 text-kova-emerald" /><Label>Your gym</Label></div>

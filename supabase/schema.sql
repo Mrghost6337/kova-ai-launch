@@ -304,6 +304,45 @@ create policy "Users can delete plan shares" on public.plan_shares for delete us
 drop policy if exists "Recipients can mark plan shares read" on public.plan_shares;
 create policy "Recipients can mark plan shares read" on public.plan_shares for update using (auth.uid() = recipient_id) with check (auth.uid() = recipient_id);
 
+-- Nutrition: per-athlete macro targets and a real food log for the Food page.
+create table if not exists public.nutrition_targets (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  sex text not null check (sex in ('male', 'female')),
+  age integer not null check (age between 10 and 100),
+  height_cm numeric not null check (height_cm between 100 and 250),
+  weight_kg numeric not null check (weight_kg between 30 and 300),
+  activity text not null check (activity in ('sedentary', 'light', 'moderate', 'active', 'athlete')),
+  goal text not null check (goal in ('lose_fat', 'maintain', 'build_muscle')),
+  calorie_target integer not null,
+  protein_target integer not null,
+  carb_target integer not null,
+  fat_target integer not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.food_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  logged_date date not null default current_date,
+  meal text not null check (meal in ('breakfast', 'lunch', 'dinner', 'snack')),
+  name text not null check (char_length(trim(name)) between 1 and 120),
+  calories integer not null check (calories between 0 and 5000),
+  protein_g integer not null default 0 check (protein_g between 0 and 500),
+  carbs_g integer not null default 0 check (carbs_g between 0 and 800),
+  fat_g integer not null default 0 check (fat_g between 0 and 300),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists food_entries_user_date_idx on public.food_entries(user_id, logged_date desc);
+
+alter table public.nutrition_targets enable row level security;
+alter table public.food_entries enable row level security;
+
+drop policy if exists "Users can manage own nutrition targets" on public.nutrition_targets;
+create policy "Users can manage own nutrition targets" on public.nutrition_targets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "Users can manage own food entries" on public.food_entries;
+create policy "Users can manage own food entries" on public.food_entries for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 -- Plan sharing: a public flag on plans plus read policies so shared plans can be
 -- viewed by any signed-in athlete (read-only for non-owners). A plan sent to a
 -- specific user via plan_shares is readable by that recipient even when private.

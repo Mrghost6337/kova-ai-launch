@@ -4,7 +4,8 @@ import { RequireAuth } from "@/components/RequireAuth";
 import AppDashboard from "./pages/AppDashboard.tsx";
 import Plan from "./pages/Plan.tsx";
 import PlanDetail from "./pages/PlanDetail.tsx";
-import { Food, Progress, Profile, Settings, Upgrade } from "./pages/AppSections.tsx";
+import { Progress, Profile, Settings, Upgrade } from "./pages/AppSections.tsx";
+import FoodPage from "./pages/Food.tsx";
 import ExerciseLibrary from "./pages/ExerciseLibrary.tsx";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { InstrumentationProvider } from "@/instrumentation.tsx";
@@ -108,7 +109,7 @@ createRoot(document.getElementById("root")!).render(
                 />
                 <Route path="/dashboard/plan" element={<RequireAuth><Plan /></RequireAuth>} />
                 <Route path="/dashboard/plan/:id" element={<RequireAuth><PlanDetail /></RequireAuth>} />
-                <Route path="/dashboard/food" element={<RequireAuth><Food /></RequireAuth>} />
+                <Route path="/dashboard/food" element={<RequireAuth><FoodPage /></RequireAuth>} />
                 <Route path="/dashboard/exercises" element={<RequireAuth><ExerciseLibrary /></RequireAuth>} />
                 <Route path="/dashboard/progress" element={<RequireAuth><Progress /></RequireAuth>} />
                 <Route path="/dashboard/social" element={<RequireAuth><Social /></RequireAuth>} />

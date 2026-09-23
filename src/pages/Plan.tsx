@@ -16,6 +16,7 @@ import {
 import { useKovaPlans } from "@/hooks/use-kova-app";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { supabase } from "@/lib/supabase";
+import { generatePlanBlueprint } from "@/lib/plan-generator";
 import { toast } from "sonner";
 
 const questions = [
@@ -51,6 +52,7 @@ export default function Plan() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [stage, setStage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [manualName, setManualName] = useState("");
   const [manualDays, setManualDays] = useState<number[]>([]);
@@ -79,6 +81,66 @@ export default function Plan() {
       setSaveError(cause instanceof Error ? cause.message : "Could not save your plan.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // The AI flow: generate a real, complete plan from the answers — days, workout
+  // titles, and catalog exercises with sets/reps/rest — then save it all.
+  const saveAiPlan = async () => {
+    setSaving(true);
+    setSaveError(null);
+    setStage("Reading the exercise catalog…");
+    try {
+      const blueprint = await generatePlanBlueprint(answers);
+      setStage("Building your weekly schedule…");
+      if (!blueprint.days.length) throw new Error("KOVA could not build a plan from these answers. Try adjusting your equipment answers.");
+      if (!supabase) throw new Error("Supabase is not configured.");
+      const plan = await createPlan({
+        name: blueprint.name,
+        source: "ai",
+        status: "draft",
+        onboarding_answers: answers,
+      });
+      setStage("Writing your workout days…");
+      const dayRows = await supabase
+        .from("plan_days")
+        .insert(
+          blueprint.days.map((day) => ({
+            plan_id: plan.id,
+            day_of_week: day.dayOfWeek,
+            title: day.title,
+            is_rest_day: false,
+            duration_minutes: day.durationMinutes,
+            notes: day.focus,
+          })),
+        )
+        .select();
+      if (dayRows.error) throw dayRows.error;
+      const createdDays = dayRows.data ?? [];
+      setStage("Filling in exercises…");
+      const exerciseRows = blueprint.days.flatMap((day, dayIndex) =>
+        day.exercises.map((item, exerciseIndex) => ({
+          plan_day_id: createdDays[dayIndex]?.id,
+          exercise_id: item.exercise.id,
+          exercise_name: item.exercise.name,
+          sort_order: exerciseIndex,
+          sets: item.sets,
+          reps: item.reps,
+          rest_seconds: item.restSeconds,
+          notes: null,
+        })),
+      );
+      const validRows = exerciseRows.filter((row): row is typeof row & { plan_day_id: string } => Boolean(row.plan_day_id));
+      if (validRows.length) {
+        const exerciseResult = await supabase.from("plan_exercises").insert(validRows);
+        if (exerciseResult.error) throw exerciseResult.error;
+      }
+      toast(`Plan created — ${validRows.length} exercises across ${createdDays.length} days.`);
+      navigate(`/dashboard/plan/${plan.id}`);
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : "Could not generate your plan.");
+      setSaving(false);
+      setStage(null);
     }
   };
 
@@ -173,7 +235,7 @@ export default function Plan() {
               <button type="button" className="mt-4 inline-flex items-center gap-2 text-xs text-white/40 hover:text-white"><CircleHelp className="size-4" />Explain this</button>
               {question.options.length > 0 ? <div className="mt-8 grid gap-2">{question.options.map((option) => <button type="button" key={option} onClick={() => setAnswer(option)} className={`flex items-center justify-between rounded-2xl border px-4 py-4 text-left text-sm transition-colors ${answers[question.key] === option ? "border-white/55 bg-white text-black" : "border-white/10 bg-white/[0.025] text-white/65 hover:bg-white/[0.06]"}`}>{option}{answers[question.key] === option && <Check className="size-4" />}</button>)}</div> : <textarea value={answers[question.key] ?? ""} onChange={(event) => setAnswer(event.target.value)} placeholder="You can leave this blank" className="mt-8 min-h-32 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/30" />}
               {saveError && <p className="mt-4 text-sm text-red-200">{saveError}</p>}
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row"><button type="button" onClick={() => { const next = { ...answers, [question.key]: "unknown" }; setAnswers(next); if (step === questions.length - 1) void savePlan(next); else setStep((value) => value + 1); }} className="h-11 rounded-full border border-white/10 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/50 hover:text-white">{step === questions.length - 1 ? "Skip & save" : "Skip"}</button><button type="button" disabled={saving} onClick={() => { if (step === questions.length - 1) void savePlan(); else setStep((value) => value + 1); }} className="group flex h-11 flex-1 items-center justify-center gap-3 rounded-full bg-white text-xs font-semibold uppercase tracking-[0.12em] text-black disabled:opacity-50">{step === questions.length - 1 ? (saving ? "Saving…" : "Save draft plan") : "Continue"}<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></button></div>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row"><button type="button" onClick={() => { const next = { ...answers, [question.key]: "unknown" }; setAnswers(next); if (step === questions.length - 1) void saveAiPlan(); else setStep((value) => value + 1); }} className="h-11 rounded-full border border-white/10 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/50 hover:text-white">{step === questions.length - 1 ? "Skip & generate" : "Skip"}</button><button type="button" disabled={saving} onClick={() => { if (step === questions.length - 1) void saveAiPlan(); else setStep((value) => value + 1); }} className="group flex h-11 flex-1 items-center justify-center gap-3 rounded-full bg-white text-xs font-semibold uppercase tracking-[0.12em] text-black disabled:opacity-50">{saving ? (stage ?? "Generating…") : step === questions.length - 1 ? "Generate my plan" : "Continue"}<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></button></div>
             </>
           ) : null}
         </div>

@@ -41,10 +41,6 @@ function EmptySection({ eyebrow, title, description }: { eyebrow: string; title:
   );
 }
 
-export function Food() {
-  return <AppShell><Seo title="Food — KOVA AI" description="Simple nutrition guidance connected to your KOVA plan." path="/dashboard/food" /><EmptySection eyebrow="Nutrition" title="Food." description="Keep nutrition simple, useful and connected to the way you train." /></AppShell>;
-}
-
 export function Progress() {
   return <AppShell><Seo title="Progress — KOVA AI" description="Understand your real KOVA AI training progress." path="/dashboard/progress" /><EmptySection eyebrow="Your history" title="Progress." description="Your meaningful changes will live here: completed workouts, strength, consistency and more." /></AppShell>;
 }

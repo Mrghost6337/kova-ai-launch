@@ -326,6 +326,86 @@ export type Database = {
         };
         Relationships: [];
       };
+      nutrition_targets: {
+        Row: {
+          user_id: string;
+          sex: "male" | "female";
+          age: number;
+          height_cm: number;
+          weight_kg: number;
+          activity: "sedentary" | "light" | "moderate" | "active" | "athlete";
+          goal: "lose_fat" | "maintain" | "build_muscle";
+          calorie_target: number;
+          protein_target: number;
+          carb_target: number;
+          fat_target: number;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          sex: "male" | "female";
+          age: number;
+          height_cm: number;
+          weight_kg: number;
+          activity: "sedentary" | "light" | "moderate" | "active" | "athlete";
+          goal: "lose_fat" | "maintain" | "build_muscle";
+          calorie_target: number;
+          protein_target: number;
+          carb_target: number;
+          fat_target: number;
+          updated_at?: string;
+        };
+        Update: {
+          sex?: "male" | "female";
+          age?: number;
+          height_cm?: number;
+          weight_kg?: number;
+          activity?: "sedentary" | "light" | "moderate" | "active" | "athlete";
+          goal?: "lose_fat" | "maintain" | "build_muscle";
+          calorie_target?: number;
+          protein_target?: number;
+          carb_target?: number;
+          fat_target?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      food_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          logged_date: string;
+          meal: "breakfast" | "lunch" | "dinner" | "snack";
+          name: string;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          logged_date?: string;
+          meal: "breakfast" | "lunch" | "dinner" | "snack";
+          name: string;
+          calories: number;
+          protein_g?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          created_at?: string;
+        };
+        Update: {
+          meal?: "breakfast" | "lunch" | "dinner" | "snack";
+          name?: string;
+          calories?: number;
+          protein_g?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          logged_date?: string;
+        };
+        Relationships: [];
+      };
       calendar_events: {
         Row: {
           id: string;
