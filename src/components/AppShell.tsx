@@ -49,13 +49,13 @@ function initials(name: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const shell = useDashboardShell();
+  const shell = useDashboardShell(children);
   if (isMobile) return <MobileShell>{children}</MobileShell>;
   return shell;
 }
 
 /** The existing desktop/tablet shell — unchanged. */
-function useDashboardShell() {
+function useDashboardShell(children: React.ReactNode) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

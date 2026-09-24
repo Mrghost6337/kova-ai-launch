@@ -18,7 +18,7 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "K";
 }
 
-function Row({ icon: Icon, label, value, onClick, external }: { icon: typeof UserRound; label: string; value?: string; onClick?: () => void; external?: boolean }) {
+function Row({ icon: Icon, label, value, onClick, external }: { icon: typeof UserRound; label: string; value?: string; onClick?: () => void; external?: string }) {
   const content = (
     <span className="flex w-full items-center justify-between gap-3">
       <span className="flex min-w-0 items-center gap-3">

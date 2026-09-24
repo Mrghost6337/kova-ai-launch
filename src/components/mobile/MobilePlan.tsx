@@ -40,7 +40,7 @@ export function MobilePlan() {
                 <h2 className="mt-2 truncate font-serif text-2xl italic tracking-[-0.03em]">{plan.name}</h2>
                 {plan.is_public && <span className="mt-1.5 inline-block rounded-full border border-kova-emerald/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-kova-emerald">Public</span>}
               </div>
-              <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-full bg-white/[0.07] text-white/60")}>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/[0.07] text-white/60">
                 <Dumbbell className="size-4" />
               </span>
             </Link>
