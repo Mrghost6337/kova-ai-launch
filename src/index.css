@@ -555,3 +555,740 @@ input:focus-visible {
   color: rgba(255, 255, 255, 0.85);
   font-weight: 600;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   KOVA desktop/tablet redesign — tokens, typography, glass primitives.
+   Everything below is additive: the mobile shell and Food Engine keep the
+   original classes untouched. Monochrome by design; accents stay semantic.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ease-app: cubic-bezier(0.22, 1, 0.36, 1);
+  --glass-card: rgba(255, 255, 255, 0.042);
+  --glass-card-hover: rgba(255, 255, 255, 0.062);
+  --glass-edge: rgba(255, 255, 255, 0.14);
+  --glass-edge-strong: rgba(255, 255, 255, 0.22);
+}
+
+.light {
+  --glass-card: rgba(255, 255, 255, 0.6);
+  --glass-card-hover: rgba(255, 255, 255, 0.82);
+  --glass-edge: rgba(12, 12, 15, 0.1);
+  --glass-edge-strong: rgba(12, 12, 15, 0.18);
+}
+
+/* ——— Typography system ————————————————————————————————————————————— */
+
+.t-display {
+  color: rgba(255, 255, 255, 0.94);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2.6rem, 4.6vw, 4.4rem);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.t-h1 {
+  color: rgba(255, 255, 255, 0.94);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2.2rem, 3.6vw, 3.2rem);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.t-h2 {
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.55rem;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.t-h3 {
+  color: rgba(255, 255, 255, 0.86);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  letter-spacing: -0.008em;
+  line-height: 1.35;
+}
+
+.t-body {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.875rem;
+  letter-spacing: -0.004em;
+  line-height: 1.65;
+}
+
+.t-caption {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
+.t-label {
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.t-btn {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.t-metric {
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.t-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.light .t-display,
+.light .t-h1,
+.light .t-h2 {
+  color: rgba(12, 12, 15, 0.92);
+}
+
+.light .t-h3 {
+  color: rgba(12, 12, 15, 0.86);
+}
+
+.light .t-body {
+  color: rgba(12, 12, 15, 0.55);
+}
+
+.light .t-caption {
+  color: rgba(12, 12, 15, 0.42);
+}
+
+.light .t-label {
+  color: rgba(12, 12, 15, 0.4);
+}
+
+.light .t-metric {
+  color: rgba(12, 12, 15, 0.9);
+}
+
+/* ——— Glass card ————————————————————————————————————————————————————— */
+
+.glass-card {
+  position: relative;
+  border-radius: 1.5rem;
+  background: var(--glass-card);
+  backdrop-filter: blur(22px) saturate(155%);
+  -webkit-backdrop-filter: blur(22px) saturate(155%);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-inset),
+    0 24px 60px -24px var(--glass-shadow);
+  transition:
+    transform 0.55s var(--ease-app),
+    background 0.35s,
+    border-color 0.35s,
+    box-shadow 0.55s var(--ease-app);
+}
+
+/* Thin traveling highlight along the top edge — the light catches the glass. */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 18% auto 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  pointer-events: none;
+}
+
+.glass-card--hover:hover {
+  transform: translateY(-2px);
+  background: var(--glass-card-hover);
+  border-color: var(--glass-edge-strong);
+}
+
+.light .glass-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 20px 44px -20px rgba(18, 18, 22, 0.16);
+}
+
+.light .glass-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+}
+
+/* ——— Liquid glass buttons ——————————————————————————————————————————— */
+
+.glass-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.4s var(--ease-app),
+    background-color 0.3s,
+    border-color 0.3s,
+    box-shadow 0.4s var(--ease-app),
+    color 0.3s;
+}
+
+.glass-btn:active {
+  transform: scale(0.97);
+}
+
+.glass-btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.glass-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.65);
+  outline-offset: 3px;
+}
+
+.light .glass-btn:focus-visible {
+  outline-color: rgba(12, 12, 15, 0.55);
+}
+
+/* Light passes across the glass on hover. */
+.glass-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.14) 50%, transparent 58%);
+  transform: translateX(-140%);
+  transition: transform 0.85s var(--ease-app);
+  pointer-events: none;
+}
+
+.glass-btn:hover::after {
+  transform: translateX(140%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-btn::after {
+    display: none;
+  }
+}
+
+.glass-btn--solid {
+  background: var(--kova-white);
+  color: var(--kova-black);
+  box-shadow:
+    0 14px 34px -14px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.glass-btn--solid:hover {
+  box-shadow:
+    0 18px 40px -14px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.glass-btn--primary {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -10px 22px rgba(0, 0, 0, 0.18),
+    0 12px 32px -16px rgba(0, 0, 0, 0.5);
+}
+
+.glass-btn--primary:hover {
+  background: rgba(255, 255, 255, 0.19);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.glass-btn--ghost {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.13);
+  color: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.glass-btn--danger {
+  background: rgba(254, 226, 226, 0.04);
+  border-color: rgba(254, 202, 202, 0.18);
+  color: rgba(254, 202, 202, 0.75);
+}
+
+.glass-btn--danger:hover {
+  background: rgba(254, 202, 202, 0.1);
+  border-color: rgba(254, 202, 202, 0.3);
+  color: rgba(254, 202, 202, 1);
+}
+
+.light .glass-btn--ghost {
+  background: rgba(12, 12, 15, 0.04);
+  border-color: rgba(12, 12, 15, 0.12);
+  color: rgba(12, 12, 15, 0.75);
+}
+
+.light .glass-btn--ghost:hover {
+  background: rgba(12, 12, 15, 0.08);
+  border-color: rgba(12, 12, 15, 0.2);
+  color: rgba(12, 12, 15, 0.95);
+}
+
+/* ——— Glass chips ————————————————————————————————————————————————————— */
+
+.glass-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-edge);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  transition:
+    transform 0.4s var(--ease-app),
+    background-color 0.25s,
+    border-color 0.25s,
+    color 0.25s,
+    box-shadow 0.4s var(--ease-app);
+}
+
+.glass-chip:hover {
+  border-color: var(--glass-edge-strong);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.glass-chip:active {
+  transform: scale(0.96);
+}
+
+.glass-chip[aria-pressed="true"],
+.glass-chip--on {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.95);
+  color: #000;
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.55);
+}
+
+.glass-chip:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.light .glass-chip {
+  background: rgba(12, 12, 15, 0.035);
+  color: rgba(12, 12, 15, 0.6);
+}
+
+.light .glass-chip[aria-pressed="true"],
+.light .glass-chip--on {
+  background: rgba(12, 12, 15, 0.9);
+  border-color: rgba(12, 12, 15, 0.95);
+  color: #fbfbfa;
+}
+
+/* ——— Glass fields ————————————————————————————————————————————————————— */
+
+.glass-field {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--glass-edge);
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 255, 255, 0.9);
+  outline: none;
+  transition:
+    border-color 0.25s,
+    background-color 0.25s,
+    box-shadow 0.4s var(--ease-app);
+}
+
+.glass-field::placeholder {
+  color: rgba(255, 255, 255, 0.26);
+}
+
+.glass-field:focus {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 0 4px rgba(255, 255, 255, 0.05);
+}
+
+.light .glass-field {
+  background: rgba(12, 12, 15, 0.035);
+  color: rgba(12, 12, 15, 0.9);
+}
+
+.light .glass-field::placeholder {
+  color: rgba(12, 12, 15, 0.3);
+}
+
+.light .glass-field:focus {
+  border-color: rgba(12, 12, 15, 0.32);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 0 4px rgba(12, 12, 15, 0.05);
+}
+
+/* ——— Glass toggle switch (physical) ————————————————————————————————— */
+
+.glass-toggle-track {
+  position: relative;
+  display: inline-flex;
+  height: 28px;
+  width: 50px;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-edge);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.glass-toggle-track[aria-checked="true"] {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+}
+
+.glass-toggle-knob {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  height: 20px;
+  width: 20px;
+  border-radius: 9999px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 0.45s var(--ease-app);
+}
+
+.glass-toggle-track[aria-checked="true"] .glass-toggle-knob {
+  transform: translate(22px, -50%);
+}
+
+.light .glass-toggle-track {
+  background: linear-gradient(180deg, rgba(12, 12, 15, 0.06), rgba(12, 12, 15, 0.03));
+}
+
+.light .glass-toggle-track[aria-checked="true"] {
+  background: linear-gradient(180deg, rgba(12, 12, 15, 0.85), rgba(12, 12, 15, 0.7));
+  border-color: rgba(12, 12, 15, 0.9);
+}
+
+.light .glass-toggle-knob {
+  background: linear-gradient(180deg, #ffffff, #ececea);
+  box-shadow: 0 2px 5px rgba(18, 18, 22, 0.25);
+}
+
+/* ——— Theme switch (segmented physical switch) ——————————————————————— */
+
+.theme-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-edge);
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.2);
+  padding: 3px;
+}
+
+.light .theme-switch {
+  background: rgba(12, 12, 15, 0.04);
+}
+
+.theme-switch__thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 4px 12px -4px rgba(0, 0, 0, 0.45);
+}
+
+.light .theme-switch__thumb {
+  background: linear-gradient(180deg, #ffffff, #f0f0ee);
+  border-color: rgba(12, 12, 15, 0.14);
+  box-shadow: 0 3px 8px -2px rgba(18, 18, 22, 0.25);
+}
+
+/* ——— Nav rail (desktop sidebar) ————————————————————————————————————— */
+
+.nav-rail-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.95rem;
+  padding: 0.6rem 0.85rem;
+  color: rgba(255, 255, 255, 0.44);
+  transition: color 0.25s;
+}
+
+.nav-rail-link:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.nav-rail-link--active {
+  color: #fff;
+}
+
+.nav-rail-link[data-active="true"] {
+  color: #fff;
+}
+
+.nav-rail-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 8px 20px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* ——— Skeletons ——————————————————————————————————————————————————————— */
+
+.skeleton {
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+  background-size: 200% 100%;
+  animation: kova-shimmer 1.5s linear infinite;
+}
+
+.light .skeleton {
+  background: linear-gradient(90deg, rgba(12, 12, 15, 0.05), rgba(12, 12, 15, 0.09), rgba(12, 12, 15, 0.05));
+  background-size: 200% 100%;
+}
+
+@keyframes kova-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ——— App scrollbars + slider inputs ————————————————————————————————— */
+
+.app-shell ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.app-shell ::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.app-shell ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
+.light .app-shell ::-webkit-scrollbar-thumb {
+  background-color: rgba(12, 12, 15, 0.16);
+}
+
+input[type="range"].glass-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"].glass-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"].glass-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -8px;
+  height: 22px;
+  width: 22px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #ffffff, #d9d9d6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: transform 0.25s var(--ease-app);
+}
+
+input[type="range"].glass-range::-webkit-slider-thumb:hover {
+  transform: scale(1.08);
+}
+
+input[type="range"].glass-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+input[type="range"].glass-range::-moz-range-thumb {
+  height: 22px;
+  width: 22px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #ffffff, #d9d9d6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+.light input[type="range"].glass-range::-webkit-slider-runnable-track,
+.light input[type="range"].glass-range::-moz-range-track {
+  background: rgba(12, 12, 15, 0.1);
+  border-color: rgba(12, 12, 15, 0.12);
+}
+
+.light input[type="range"].glass-range::-webkit-slider-thumb {
+  background: linear-gradient(180deg, #2a2a2e, #101013);
+  border-color: rgba(12, 12, 15, 0.5);
+}
+
+/* ——— Onboarding overlay ————————————————————————————————————————————— */
+
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(28px) saturate(120%);
+  -webkit-backdrop-filter: blur(28px) saturate(120%);
+}
+
+.light .onboarding-backdrop {
+  background: rgba(244, 244, 241, 0.6);
+}
+
+.onboarding-panel {
+  position: relative;
+  border-radius: 2rem;
+  background: rgba(14, 14, 15, 0.72);
+  backdrop-filter: blur(40px) saturate(160%);
+  -webkit-backdrop-filter: blur(40px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -30px 60px rgba(0, 0, 0, 0.25),
+    0 60px 120px -40px rgba(0, 0, 0, 0.8);
+}
+
+.light .onboarding-panel {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(12, 12, 15, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 50px 100px -40px rgba(18, 18, 22, 0.35);
+}
+
+/* ——— Segmented control (plan wizard, tabs) —————————————————————————— */
+
+.glass-segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-edge);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.glass-segmented__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  padding: 0.45rem 0.95rem;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.25s;
+}
+
+.glass-segmented__item[data-active="true"] {
+  color: #fff;
+}
+
+.glass-segmented__thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.light .glass-segmented {
+  background: rgba(12, 12, 15, 0.035);
+}
+
+.light .glass-segmented__item {
+  color: rgba(12, 12, 15, 0.5);
+}
+
+.light .glass-segmented__item[data-active="true"] {
+  color: rgba(12, 12, 15, 0.95);
+}
+
+.light .glass-segmented__thumb {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(12, 12, 15, 0.12);
+}

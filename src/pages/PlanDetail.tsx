@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CalendarDays, Check, CheckCircle2, ChevronDown, ChevronUp, Copy, Dumbbell, Eye, Link2, LogOut, Pencil, Plus, Search, Share2, Sparkles, Trash2, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { AppShell } from "@/components/AppShell";
+import { GlassButton, GlassCard, GlassChip, GlassField, SectionHeader } from "@/components/glass";
 import { Seo } from "@/components/Seo";
 import { useKovaPlanDays, useKovaPlanExercises, useKovaPlans, type Plan, type PlanExercise } from "@/hooks/use-kova-app";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
@@ -349,42 +350,42 @@ export default function PlanDetail() {
   return <AppShell>
     <Seo title={`${plan?.name ?? "Plan"} — KOVA AI`} description="Your KOVA AI training plan." path={`/dashboard/plan/${id ?? ""}`} />
     <div className="mx-auto max-w-6xl">
-      <Link to="/dashboard/plan" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-white/40 hover:text-white"><ArrowLeft className="size-4" />All plans</Link>
-      {isLoading ? <p className="mt-12 text-sm text-white/40">Loading this plan…</p> : error ? <p className="mt-12 text-sm text-red-200">Could not load this plan: {error}</p> : !plan ? <div className="mt-12 rounded-2xl border border-white/10 p-8 text-white/55">This plan could not be found, or it is private.</div> : <>
+      <GlassButton variant="ghost" size="sm" onClick={() => navigate("/dashboard/plan")}><ArrowLeft className="size-4" />All plans</GlassButton>
+      {isLoading ? <div className="mt-12 space-y-4"><div className="skeleton h-20 w-2/3 rounded-2xl" /><div className="skeleton h-72 rounded-[1.5rem]" /></div> : error ? <p className="mt-12 text-sm text-red-200">Could not load this plan: {error}</p> : !plan ? <GlassCard className="mt-12 p-8 text-white/55">This plan could not be found, or it is private.</GlassCard> : <>
         {/* Header */}
-        <div className="mt-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div className="mt-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div className="min-w-0">
-            <p className="eyebrow">{plan.source === "ai" ? "KOVA plan" : "Manual plan"} · {plan.status}{isOwner ? "" : " · shared with you"}</p>
+            <p className="t-label">{plan.source === "ai" ? "KOVA plan" : "Manual plan"} · {plan.status}{isOwner ? "" : " · shared with you"}</p>
             {editing && isOwner ? (
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <input value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} className="h-12 w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.04] px-4 font-serif text-3xl italic tracking-[-0.04em] text-white outline-none focus:border-white/30" />
-                <select value={statusDraft} onChange={(event) => setStatusDraft(event.target.value as "draft" | "active")} className="h-11 rounded-full border border-white/10 bg-[var(--surface-solid)] px-4 text-xs text-white outline-none">
+                <input value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} className="glass-field h-14 w-full max-w-md px-4 font-serif text-3xl italic tracking-[-0.04em] text-white" />
+                <select value={statusDraft} onChange={(event) => setStatusDraft(event.target.value as "draft" | "active")} className="glass-field h-11 rounded-full px-4 text-xs">
                   <option value="draft">Draft</option>
                   <option value="active">Active</option>
                 </select>
               </div>
             ) : (
-              <h1 className="mt-3 truncate font-serif text-6xl italic tracking-[-0.08em]">{plan.name}.</h1>
+              <h1 className="t-display mt-4 truncate">{plan.name}.</h1>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {isOwner && (
               <>
-                <button type="button" onClick={() => { if (editing) void savePlanChanges(); else setEditing(true); }} className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/15 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-white hover:bg-white/[0.06]">{editing ? <Check className="size-4" /> : <Pencil className="size-4" />}{editing ? "Save plan" : "Edit plan"}</button>
-                <button type="button" onClick={() => void toggleShare()} className={`inline-flex h-11 items-center justify-center gap-2 rounded-full border px-5 text-xs font-semibold uppercase tracking-[0.12em] ${plan.is_public ? "border-kova-emerald/30 text-kova-emerald hover:bg-kova-emerald/5" : "border-white/15 text-white hover:bg-white/[0.06]"}`}>{plan.is_public ? <Share2 className="size-4" /> : <Link2 className="size-4" />}{plan.is_public ? "Public" : "Share"}</button>
-                {plan.is_public && <button type="button" onClick={() => void copyPlanLink()} className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/15 px-4 text-xs text-white/60 hover:bg-white/[0.06]"><Copy className="size-4" />Copy link</button>}
-                <button type="button" onClick={() => setDeleteOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-red-300/20 px-4 text-xs text-red-200/70 hover:bg-red-300/10 hover:text-red-200"><Trash2 className="size-4" />Delete</button>
+                <GlassButton variant="ghost" onClick={() => { if (editing) void savePlanChanges(); else setEditing(true); }}>{editing ? <Check className="size-4" /> : <Pencil className="size-4" />}{editing ? "Save plan" : "Edit plan"}</GlassButton>
+                <GlassButton variant="ghost" onClick={() => void toggleShare()} className={plan.is_public ? "!border-white/40 !text-white" : ""}>{plan.is_public ? <Share2 className="size-4" /> : <Link2 className="size-4" />}{plan.is_public ? "Public" : "Share"}</GlassButton>
+                {plan.is_public && <GlassButton variant="ghost" size="sm" onClick={() => void copyPlanLink()}><Copy className="size-4" />Copy link</GlassButton>}
+                <GlassButton variant="danger" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" />Delete</GlassButton>
               </>
             )}
-            {!isOwner && <span className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 px-5 text-xs text-white/55"><LogOut className="size-4" />Read-only view</span>}
+            {!isOwner && <span className="glass-chip h-11 px-5 text-xs"><LogOut className="size-4" />Read-only view</span>}
           </div>
         </div>
 
         {/* Week grid + day editor */}
         <div className="mt-10 grid gap-4 lg:grid-cols-3">
-          <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6 lg:col-span-2">
-            <div className="flex items-center gap-3"><CalendarDays className="size-5 text-white/50" /><h2 className="font-serif text-3xl italic">Weekly plan</h2></div>
-            <div className="mt-7 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <GlassCard className="p-6 lg:col-span-2">
+            <SectionHeader icon={CalendarDays} label="Weekly plan" />
+            <div className="mt-7 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {week.map((day, index) => {
                 const savedDay = days.find((candidate) => candidate.day_of_week === index);
                 const isSelected = savedDay?.id === selectedDayId;
@@ -429,39 +430,37 @@ export default function PlanDetail() {
                 );
               })}
             </div>
-            {isOwner && <button type="button" onClick={() => setAddingDay((value) => !value)} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white"><Plus className="size-4" />Add workout day</button>}
-            {isOwner && addingDay && <form onSubmit={saveDay} className="mt-5 grid gap-2 rounded-2xl border border-white/10 bg-black/20 p-4 sm:grid-cols-[1fr_1.5fr_auto]">
+            {isOwner && <GlassButton variant="ghost" size="sm" onClick={() => setAddingDay((value) => !value)} className="mt-5"><Plus className="size-4" />Add workout day</GlassButton>}
+            {isOwner && addingDay && <form onSubmit={saveDay} className="mt-5 grid gap-2 rounded-2xl border border-white/[0.08] bg-black/20 p-4 sm:grid-cols-[1fr_1.5fr_auto]">
               <select value={dayIndex} onChange={(event) => setDayIndex(Number(event.target.value))} className="h-11 rounded-xl border border-white/10 bg-[var(--surface-solid)] px-3 text-sm text-white">{week.map((day, index) => <option key={day} value={index}>{day}</option>)}</select>
               <input value={dayTitle} onChange={(event) => setDayTitle(event.target.value)} placeholder="Workout name" className="h-11 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none placeholder:text-white/25" />
               <input type="number" min={5} max={300} value={dayDuration} onChange={(event) => setDayDuration(Number(event.target.value) || 60)} placeholder="Min" className="h-11 w-20 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none placeholder:text-white/25" aria-label="Duration in minutes" />
               <button type="submit" className="h-11 rounded-xl bg-white px-4 text-xs font-semibold text-black sm:col-span-3">Save day</button>
             </form>}
             {dayError && <p className="mt-4 text-xs text-red-200">{dayError}</p>}
-          </section>
+          </GlassCard>
 
-          <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6">
-            <Sparkles className="size-5 text-kova-amber" />
+          <GlassCard className="p-6">
+            <Sparkles className="size-5 text-white/50" strokeWidth={1.6} />
             <h2 className="mt-7 font-serif text-3xl italic">Make it yours</h2>
             <p className="mt-3 text-sm leading-6 text-white/40">{isOwner ? "Rename days, change the order, adjust sets and reps — everything saves instantly. Log a session when you finish a workout." : "This plan was shared by its owner. You can view every day and exercise, but changes stay with the owner."}</p>
             {isOwner && selectedDay && exercises.length > 0 && (
-              <button type="button" disabled={logging} onClick={() => void logWorkout()} className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-kova-emerald px-5 text-xs font-semibold uppercase tracking-[0.12em] text-black disabled:opacity-50">{logging ? "Logging…" : "Log this workout"}<CheckCircle2 className="size-4" /></button>
+              <button type="button" disabled={logging} onClick={() => void logWorkout()} className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-xs font-semibold uppercase tracking-[0.12em] text-black transition-opacity hover:opacity-90 disabled:opacity-50">{logging ? "Logging…" : "Log this workout"}<CheckCircle2 className="size-4" /></button>
             )}
             <Link to="/dashboard/plan" className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white">Back to plans <ArrowRight className="size-4" /></Link>
-          </section>
+          </GlassCard>
         </div>
 
         {/* Exercises for selected day */}
-        <section className="mt-4 rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6">
+        <GlassCard className="mt-4 p-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <div className="flex items-center gap-3"><Dumbbell className="size-5 text-kova-sky" /><h2 className="font-serif text-3xl italic">{selectedDay?.title ?? "Exercises"}</h2></div>
+              <div className="flex items-center gap-3"><Dumbbell className="size-5 text-white/70" /><h2 className="font-serif text-3xl italic">{selectedDay?.title ?? "Exercises"}</h2></div>
               <p className="mt-2 text-sm text-white/40">{selectedDay ? `${exercises.length} exercise${exercises.length === 1 ? "" : "s"} · ${exercises.reduce((sum, exercise) => sum + (exercise.sets || 0), 0)} total sets` : "Add a workout day first."}</p>
               {selectedDay && exercises.length > 0 && <p className="mt-1.5 text-xs text-white/30">Click an exercise to open the full guide — bigger demo, weight tips and technique.</p>}
             </div>
             {isOwner && selectedDay && (
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={() => void openPicker()} className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-semibold uppercase tracking-[0.12em] text-black"><Dumbbell className="size-4" />Add exercise</button>
-              </div>
+              <GlassButton variant="solid" size="sm" onClick={() => void openPicker()} disabled={addingExercise}><Dumbbell className="size-4" />Add exercise</GlassButton>
             )}
           </div>
 
@@ -488,15 +487,15 @@ export default function PlanDetail() {
                 onMove={(direction) => void moveExercise(index, direction)}
               />
             );
-          })}</div> : <p className="mt-7 text-sm leading-7 text-white/40">{selectedDay ? "No exercises yet. Add them from the catalog or type a name above." : "Select a workout day above to see its exercises."}</p>}
-        </section>
+          })}</div> : <p className="t-body mt-7">{selectedDay ? "No exercises yet. Add them from the catalog or type a name above." : "Select a workout day above to see its exercises."}</p>}
+        </GlassCard>
       </>}
     </div>
 
     {/* Exercise picker */}
-    {pickerOpen && <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] overflow-y-auto bg-black/75 backdrop-blur-md" onClick={() => setPickerOpen(false)}>
+    {pickerOpen && <div role="dialog" aria-modal="true" className="fixed inset-0 z-[70] overflow-y-auto bg-black/70 backdrop-blur-md" onClick={() => setPickerOpen(false)}>
       <div className="flex min-h-full items-center justify-center p-5" onClick={(event) => event.stopPropagation()}>
-      <div className="liquid-glass w-full max-w-2xl rounded-[2rem] border-white/15 bg-[var(--surface-solid)] p-5 sm:p-7">
+      <div className="glass-card w-full max-w-2xl bg-[var(--surface-solid)]/85 p-5 sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <div><p className="eyebrow">Exercise catalog</p><h2 className="mt-3 font-serif text-4xl italic">Choose a movement.</h2></div>
           <button type="button" onClick={() => setPickerOpen(false)} className="flex size-9 items-center justify-center rounded-full bg-white/[0.06] text-white/50 hover:text-white" aria-label="Close exercise picker"><X className="size-4" /></button>
@@ -514,11 +513,11 @@ export default function PlanDetail() {
 
     {/* Exercise guide modal */}
     {detail && (
-      <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] overflow-y-auto bg-black/75 backdrop-blur-md" onClick={() => setDetail(null)}>
+      <div role="dialog" aria-modal="true" className="fixed inset-0 z-[70] overflow-y-auto bg-black/70 backdrop-blur-md" onClick={() => setDetail(null)}>
         <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
-          <div className="liquid-glass w-full max-w-3xl rounded-[2rem] border-white/15 bg-[var(--surface-solid)] p-5 sm:p-8" onClick={(event) => event.stopPropagation()}>
+          <div className="glass-card w-full max-w-3xl bg-[var(--surface-solid)]/85 p-5 sm:p-8" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4">
-              <div><p className="eyebrow">Exercise guide</p><h2 className="mt-3 font-serif text-4xl italic capitalize tracking-[-0.05em] sm:text-5xl">{detail.name}</h2></div>
+              <div><p className="t-label">Exercise guide</p><h2 className="t-h1 mt-3 capitalize">{detail.name}</h2></div>
               <button type="button" onClick={() => setDetail(null)} className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/50 hover:text-white" aria-label="Close exercise guide"><X className="size-4" /></button>
             </div>
             <div className="mt-7 grid gap-6 sm:grid-cols-[0.85fr_1fr]">
@@ -543,8 +542,8 @@ export default function PlanDetail() {
                     <p className="mt-2 text-sm text-white/50">Equipment: <span className="capitalize text-white/80">{detailExercise.equipment.join(", ")}</span></p>
                   </>
                 ) : null}
-                <div className="mt-5 rounded-2xl border border-kova-amber/20 bg-kova-amber/[0.06] p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-kova-amber">Weight guide</p>
+                <div className="mt-5 rounded-2xl border border-white/[0.1] bg-white/[0.04] p-4">
+                  <p className="t-label">Weight guide</p>
                   <p className="mt-2 text-sm leading-6 text-white/60">Start with a weight that keeps your form clean for every rep. When you can finish the top of your rep range with one or two reps left in reserve, add 2.5–5 kg next session.</p>
                 </div>
                 {detailExercise ? (
@@ -559,7 +558,7 @@ export default function PlanDetail() {
                 ) : null}
               </div>
             </div>
-            <button type="button" onClick={() => setDetail(null)} className="mt-7 h-11 w-full rounded-full bg-white text-xs font-semibold uppercase tracking-[0.12em] text-black">Close</button>
+            <GlassButton variant="solid" className="mt-7 w-full" onClick={() => setDetail(null)}>Close</GlassButton>
           </div>
         </div>
       </div>

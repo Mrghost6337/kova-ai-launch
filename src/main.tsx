@@ -4,7 +4,8 @@ import { RequireAuth } from "@/components/RequireAuth";
 import AppDashboard from "./pages/AppDashboard.tsx";
 import Plan from "./pages/Plan.tsx";
 import PlanDetail from "./pages/PlanDetail.tsx";
-import { Progress, Profile, Settings, Upgrade } from "./pages/AppSections.tsx";
+import { Profile, Settings, Upgrade } from "./pages/AppSections.tsx";
+import ProgressPage from "./pages/Progress.tsx";
 import FoodPage from "./pages/Food.tsx";
 import ExerciseLibrary from "./pages/ExerciseLibrary.tsx";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
@@ -111,7 +112,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/dashboard/plan/:id" element={<RequireAuth><PlanDetail /></RequireAuth>} />
                 <Route path="/dashboard/food" element={<RequireAuth><FoodPage /></RequireAuth>} />
                 <Route path="/dashboard/exercises" element={<RequireAuth><ExerciseLibrary /></RequireAuth>} />
-                <Route path="/dashboard/progress" element={<RequireAuth><Progress /></RequireAuth>} />
+                <Route path="/dashboard/progress" element={<RequireAuth><ProgressPage /></RequireAuth>} />
                 <Route path="/dashboard/social" element={<RequireAuth><Social /></RequireAuth>} />
                 <Route path="/dashboard/profile" element={<RequireAuth><Profile /></RequireAuth>} />
                 <Route path="/dashboard/settings" element={<RequireAuth><Settings /></RequireAuth>} />

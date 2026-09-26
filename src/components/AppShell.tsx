@@ -15,6 +15,7 @@ import {
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import { KovaLogo } from "@/components/KovaLogo";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { MobileNav } from "@/components/mobile/MobileNav";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useTheme } from "@/hooks/use-theme";
@@ -54,10 +55,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return shell;
 }
 
-/** The existing desktop/tablet shell — unchanged. */
+/** Desktop/tablet shell — redesigned liquid-glass nav rail. */
 function useDashboardShell(children: React.ReactNode) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useSupabaseAuth();
@@ -70,7 +71,8 @@ function useDashboardShell(children: React.ReactNode) {
     typeof metadata?.display_name === "string" && metadata.display_name.trim()
       ? metadata.display_name
       : user?.email?.split("@")[0] || "Athlete";
-  const avatarUrl = typeof metadata?.avatar_url === "string" ? metadata.avatar_url : profile?.avatar_url || "";
+  const avatarUrl =
+    typeof metadata?.avatar_url === "string" ? metadata.avatar_url : profile?.avatar_url || "";
   const username = profile?.username;
 
   useEffect(() => {
@@ -88,7 +90,7 @@ function useDashboardShell(children: React.ReactNode) {
     const closeOnOutsideClick = (event: MouseEvent) => {
       if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
         setAccountOpen(false);
-    }
+      }
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
@@ -101,14 +103,16 @@ function useDashboardShell(children: React.ReactNode) {
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <div className={`app-shell min-h-screen bg-[var(--app-bg)] text-white ${resolved === "light" ? "light" : ""}`}>
+    <div
+      className={`app-shell min-h-screen bg-[var(--app-bg)] text-white ${resolved === "light" ? "light" : ""}`}
+    >
       <aside
-        className={`app-sidebar fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col p-5 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`app-sidebar fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col p-5 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-3 text-white transition-opacity hover:opacity-75"
           >
             <KovaLogo className="size-9 rounded-[23%] ring-1 ring-white/15" />
@@ -126,26 +130,44 @@ function useDashboardShell(children: React.ReactNode) {
           </button>
         </div>
 
-        <div className="mt-12 flex-1 space-y-1">
-          <p className="mb-3 px-3.5 text-[10px] font-medium uppercase tracking-[0.2em] text-white/25">
-            Workspace
-          </p>
+        <nav className="mt-10 flex-1 space-y-0.5" aria-label="Primary">
           {navigation.map(({ label, to, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={to === "/dashboard"}
               onClick={closeMobile}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm transition-all ${isActive ? "bg-white text-black" : "text-white/45 hover:bg-white/[0.06] hover:text-white"}`
-              }
+              className={({ isActive }) => `nav-rail-link ${isActive ? "nav-rail-link--active" : ""}`}
             >
-              <Icon className="size-[17px]" strokeWidth={1.6} />
-              <span>{label}</span>
-              {label === "Plan" && <ChevronRight className="ml-auto size-3 opacity-40" />}
+              {({ isActive }) => (
+                <>
+                  {isActive ? <span className="nav-rail-pill" aria-hidden /> : null}
+                  <Icon className="relative size-[17px]" strokeWidth={1.6} />
+                  <span className="relative text-sm">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
-        </div>
+
+          <div className="!mt-8 border-t border-white/[0.07] pt-6">
+            {accountLinks.map(({ label, to, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={closeMobile}
+                className={({ isActive }) => `nav-rail-link ${isActive ? "nav-rail-link--active" : ""}`}
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive ? <span className="nav-rail-pill" aria-hidden /> : null}
+                    <Icon className="relative size-4" strokeWidth={1.6} />
+                    <span className="relative text-sm">{label}</span>
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </div>
+        </nav>
 
         <div ref={accountRef} className="relative border-t border-white/[0.08] pt-4">
           <button
@@ -155,17 +177,25 @@ function useDashboardShell(children: React.ReactNode) {
             className="flex w-full items-center gap-3 rounded-2xl p-2 text-left transition-colors hover:bg-white/[0.06]"
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="size-10 rounded-full border border-white/15 object-cover" />
+              <img
+                src={avatarUrl}
+                alt=""
+                className="size-9 rounded-full border border-white/15 object-cover"
+              />
             ) : (
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-black">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-[11px] font-semibold text-black">
                 {initials(displayName)}
               </span>
             )}
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm text-white/80">{displayName}</span>
-              <span className="mt-0.5 block truncate text-[11px] text-white/30">{username ? `@${username}` : "Account menu"}</span>
+              <span className="mt-0.5 block truncate text-[11px] text-white/30">
+                {username ? `@${username}` : "Account"}
+              </span>
             </span>
-            <ChevronRight className={`size-4 text-white/30 transition-transform ${accountOpen ? "rotate-90" : ""}`} />
+            <ChevronRight
+              className={`size-4 text-white/30 transition-transform ${accountOpen ? "rotate-90" : ""}`}
+            />
           </button>
 
           <AnimatePresence>
@@ -181,17 +211,6 @@ function useDashboardShell(children: React.ReactNode) {
                   <p className="truncate text-xs text-white/70">{displayName}</p>
                   <p className="mt-1 truncate text-[11px] text-white/30">{user?.email}</p>
                 </div>
-                {accountLinks.map(({ label, to, icon: Icon }) => (
-                  <button
-                    type="button"
-                    key={to}
-                    onClick={() => navigate(to)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 transition-colors hover:bg-white/[0.08] hover:text-white"
-                  >
-                    <Icon className="size-4" />
-                    {label}
-                  </button>
-                ))}
                 {username && (
                   <button
                     type="button"
@@ -216,30 +235,59 @@ function useDashboardShell(children: React.ReactNode) {
         </div>
       </aside>
 
-      {mobileOpen && <button type="button" aria-label="Close navigation overlay" onClick={closeMobile} className="fixed inset-0 z-40 bg-black/60 lg:hidden" />}
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation overlay"
+          onClick={closeMobile}
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+        />
+      )}
 
-      <div className="lg:pl-[264px]">
+      <div className="lg:pl-[248px]">
         <header
-          className={`app-navbar sticky top-0 z-30 flex h-[72px] items-center justify-between px-5 sm:px-8 lg:px-10 ${scrolled ? "app-navbar--scrolled" : ""}`}
+          className={`app-navbar sticky top-0 z-30 flex h-16 items-center justify-between px-6 sm:px-8 lg:px-12 ${scrolled ? "app-navbar--scrolled" : ""}`}
         >
-          <button type="button" onClick={() => setMobileOpen(true)} className="flex items-center gap-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="flex items-center gap-3 lg:hidden"
+          >
             <KovaLogo className="size-8 rounded-[23%] ring-1 ring-white/15" />
             <span className="text-xs font-semibold uppercase tracking-[0.22em]">KOVA AI</span>
           </button>
-          <div className="hidden text-[10px] uppercase tracking-[0.2em] text-white/30 lg:block">KOVA AI · Training workspace</div>
-          <button type="button" onClick={() => navigate("/dashboard/profile")} className="flex items-center gap-2 text-right lg:hidden">
+          <div className="hidden text-[10px] uppercase tracking-[0.2em] text-white/30 lg:block">
+            Training workspace
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/profile")}
+            className="flex items-center gap-2 text-right lg:hidden"
+          >
             <span className="hidden text-xs text-white/45 sm:block">{displayName}</span>
-            {avatarUrl ? <img src={avatarUrl} alt="" className="size-8 rounded-full border border-white/15 object-cover" /> : <span className="flex size-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-xs text-white/70">{initials(displayName)}</span>}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="size-8 rounded-full border border-white/15 object-cover"
+              />
+            ) : (
+              <span className="flex size-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-xs text-white/70">
+                {initials(displayName)}
+              </span>
+            )}
           </button>
           <div className="hidden lg:block" />
         </header>
-        <main className="px-5 py-8 sm:px-8 sm:py-10 lg:px-10">{children}</main>
+        <main className="px-6 py-10 sm:px-8 lg:px-12">{children}</main>
       </div>
+
+      <OnboardingGate />
     </div>
   );
 }
 
-/** The new mobile app shell — activates only on phones (≤767px). */
+/** The existing mobile app shell — activates only on phones (≤767px). */
 function MobileShell({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useSupabaseAuth();
   const { profile } = useKovaProfile(user?.id);
@@ -252,32 +300,59 @@ function MobileShell({ children }: { children: React.ReactNode }) {
     typeof metadata?.display_name === "string" && metadata.display_name.trim()
       ? metadata.display_name
       : user?.email?.split("@")[0] || "Athlete";
-  const avatarUrl = typeof metadata?.avatar_url === "string" ? metadata.avatar_url : profile?.avatar_url || "";
+  const avatarUrl =
+    typeof metadata?.avatar_url === "string" ? metadata.avatar_url : profile?.avatar_url || "";
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [location.pathname]);
 
   return (
-    <div className={`app-shell app-shell--mobile min-h-[100dvh] bg-[var(--app-bg)] text-white ${resolved === "light" ? "light" : ""}`}>
-      {/* Compact top bar */}
+    <div
+      className={`app-shell app-shell--mobile min-h-[100dvh] bg-[var(--app-bg)] text-white ${resolved === "light" ? "light" : ""}`}
+    >
       <header className="mobile-topbar sticky top-0 z-30 flex h-[56px] items-center justify-between px-5">
         <button type="button" onClick={() => navigate("/dashboard")} className="flex items-center gap-2.5">
           <KovaLogo className="size-7 rounded-[23%] ring-1 ring-white/15" />
           <span className="text-xs font-semibold uppercase tracking-[0.22em]">KOVA AI</span>
         </button>
-        <button type="button" onClick={() => navigate("/dashboard/profile")} aria-label="Open profile" className="flex items-center">
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard/profile")}
+          aria-label="Open profile"
+          className="flex items-center"
+        >
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="size-8 rounded-full border border-white/15 object-cover" />
+            <img
+              src={avatarUrl}
+              alt=""
+              className="size-8 rounded-full border border-white/15 object-cover"
+            />
           ) : (
-            <span className="flex size-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-[10px] font-semibold text-white/80">{initials(displayName)}</span>
+            <span className="flex size-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-[10px] font-semibold text-white/80">
+              {initials(displayName)}
+            </span>
           )}
         </button>
       </header>
 
-      {/* Content clearance: dock (≈74px) + float margin (12px) + home indicator. */}
-      <main className="mobile-content px-4 pb-[calc(112px+max(12px,env(safe-area-inset-bottom)))] pt-2">{children}</main>
+      <main className="mobile-content px-4 pb-[calc(112px+max(12px,env(safe-area-inset-bottom)))] pt-2">
+        {children}
+      </main>
       <MobileNav />
+      <OnboardingGate />
     </div>
   );
+}
+
+/**
+ * First-time onboarding. Shows once per account until the athlete finishes it;
+ * the answer set is persisted to their real Supabase profile.
+ */
+function OnboardingGate() {
+  const { user } = useSupabaseAuth();
+  const { profile, isLoading, update } = useKovaProfile(user?.id);
+  if (isLoading || !user || !profile) return null;
+  if (profile.onboarding_completed) return null;
+  return <OnboardingFlow />;
 }

@@ -1,7 +1,8 @@
-import { ArrowLeft, ArrowRight, CalendarDays, Check, CircleHelp, Dumbbell, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Dumbbell, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { AppShell } from "@/components/AppShell";
+import { GlassButton, GlassCard, GlassChip, GlassField, SectionHeader, SelectCard } from "@/components/glass";
 import { Seo } from "@/components/Seo";
 import {
   AlertDialog,
@@ -18,6 +19,10 @@ import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { supabase } from "@/lib/supabase";
 import { generatePlanBlueprint } from "@/lib/plan-generator";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+
+/* The guided plan wizard. Same question engine as before — restyled with the
+   liquid-glass system. Answers feed the real deterministic plan generator. */
 
 const questions = [
   { key: "experience", title: "Where are you starting?", explanation: "This helps KOVA choose a sensible starting point. You do not need to know training science.", options: ["Complete beginner", "Some experience", "Intermediate", "Advanced", "I don't know"] },
@@ -42,6 +47,12 @@ const questions = [
 const week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 type Mode = "ai" | "manual";
+
+const pageMotion = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+};
 
 export default function Plan() {
   const { user } = useSupabaseAuth();
@@ -191,52 +202,135 @@ export default function Plan() {
       <AppShell>
         <Seo title="Create a plan — KOVA AI" description="Create a personal KOVA AI training plan." path="/dashboard/plan" />
         <div className="mx-auto max-w-2xl">
-          <button type="button" onClick={() => { if (!mode) setCreating(false); else if (mode === "ai" && step > 0) setStep((value) => value - 1); else setMode(null); }} className="mb-10 inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-white/40 hover:text-white"><ArrowLeft className="size-4" />Back</button>
+          <GlassButton variant="ghost" size="sm" onClick={() => { if (!mode) setCreating(false); else if (mode === "ai" && step > 0) setStep((value) => value - 1); else setMode(null); }}>
+            <ArrowLeft className="size-4" />
+            Back
+          </GlassButton>
+
           {!mode ? (
-            <>
-              <p className="eyebrow">Plan maker</p>
-              <h1 className="mt-4 font-serif text-5xl italic tracking-[-0.07em] sm:text-6xl">How should we start?</h1>
-              <p className="mt-5 max-w-lg text-sm leading-7 text-white/45">Choose a starting point. Both options stay editable, and nothing is generated until you confirm.</p>
+            <motion.div {...pageMotion}>
+              <p className="t-label mt-8">Plan maker</p>
+              <h1 className="t-h1 mt-4">How should we start?</h1>
+              <p className="t-body mt-4 max-w-lg">Choose a starting point. Both options stay editable, and nothing is generated until you confirm.</p>
               <div className="mt-10 grid gap-4 sm:grid-cols-2">
-                <button type="button" onClick={() => setMode("ai")} className="liquid-glass rounded-[1.5rem] border-white/15 bg-white/[0.06] p-6 text-left transition-transform hover:-translate-y-1"><Sparkles className="size-5 text-white/70" /><h2 className="mt-8 font-serif text-3xl italic">Create with AI</h2><p className="mt-3 text-sm leading-6 text-white/45">Answer a few simple questions progressively. Skip anything you do not know.</p><span className="mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">Start <ArrowRight className="size-4" /></span></button>
-                <button type="button" onClick={() => setMode("manual")} className="rounded-[1.5rem] border border-white/10 bg-white/[0.025] p-6 text-left transition-colors hover:bg-white/[0.05]"><Dumbbell className="size-5 text-white/55" /><h2 className="mt-8 font-serif text-3xl italic">Create manually</h2><p className="mt-3 text-sm leading-6 text-white/45">Name your plan, pick your training days and start building workouts instantly.</p><span className="mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">Start <ArrowRight className="size-4" /></span></button>
+                <SelectCard
+                  selected={false}
+                  title="Create with AI"
+                  description="Answer a few simple questions progressively. Skip anything you do not know."
+                  onClick={() => setMode("ai")}
+                  className="!p-6"
+                />
+                <SelectCard
+                  selected={false}
+                  title="Create manually"
+                  description="Name your plan, pick your training days and start building workouts instantly."
+                  onClick={() => setMode("manual")}
+                  className="!p-6"
+                />
               </div>
-            </>
+            </motion.div>
           ) : mode === "manual" ? (
-            <>
-              <p className="eyebrow">Manual plan</p>
-              <h1 className="mt-5 font-serif text-5xl italic tracking-[-0.07em]">Name your plan.</h1>
-              <p className="mt-4 text-sm leading-7 text-white/45">Pick the days you want to train. You can add or change everything later.</p>
-              <input value={manualName} onChange={(event) => setManualName(event.target.value)} placeholder="e.g. My strength plan" className="mt-8 h-14 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-5 text-white outline-none placeholder:text-white/25 focus:border-white/30" />
-              <p className="mt-8 text-xs uppercase tracking-[0.18em] text-white/35">Training days</p>
+            <motion.div {...pageMotion}>
+              <p className="t-label mt-8">Manual plan</p>
+              <h1 className="t-h1 mt-4">Name your plan.</h1>
+              <p className="t-body mt-4">Pick the days you want to train. You can add or change everything later.</p>
+              <GlassField className="mt-8 h-14 text-base" value={manualName} onChange={(event) => setManualName(event.target.value)} placeholder="e.g. My strength plan" aria-label="Plan name" />
+              <p className="t-label mt-8">Training days</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {week.map((day, index) => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => toggleManualDay(index)}
-                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition-colors ${manualDays.includes(index) ? "border-white bg-white text-black" : "border-white/10 text-white/50 hover:bg-white/[0.05] hover:text-white"}`}
-                  >
-                    {manualDays.includes(index) && <Check className="size-3" />}
+                  <GlassChip key={day} selected={manualDays.includes(index)} onClick={() => toggleManualDay(index)}>
+                    {manualDays.includes(index) ? <Check className="size-3" /> : null}
                     {day}
-                  </button>
+                  </GlassChip>
                 ))}
               </div>
-              <input value={manualWorkoutTitle} onChange={(event) => setManualWorkoutTitle(event.target.value)} placeholder="Workout name (applies to the days above, optional)" className="mt-6 h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-5 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/30" />
-              {saveError && <p className="mt-4 text-sm text-red-200">{saveError}</p>}
-              <button type="button" disabled={saving} onClick={() => void saveManualPlan()} className="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-full bg-white text-sm font-semibold text-black disabled:opacity-50">{saving ? "Saving…" : "Create plan"}{!saving && <ArrowRight className="size-4" />}</button>
-            </>
+              <GlassField className="mt-6" value={manualWorkoutTitle} onChange={(event) => setManualWorkoutTitle(event.target.value)} placeholder="Workout name (applies to the days above, optional)" aria-label="Workout name" />
+              {saveError && <p className="mt-4 text-sm text-red-300">{saveError}</p>}
+              <GlassButton variant="solid" size="lg" busy={saving} className="mt-5 w-full" onClick={() => void saveManualPlan()}>
+                {saving ? "Saving…" : "Create plan"}
+                {!saving ? <ArrowRight className="size-4" /> : null}
+              </GlassButton>
+            </motion.div>
           ) : question ? (
-            <>
-              <div className="flex items-center justify-between"><p className="eyebrow">KOVA onboarding</p><span className="text-xs text-white/30">{step + 1} / {questions.length}</span></div>
-              <div className="mt-7 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${((step + 1) / questions.length) * 100}%` }} /></div>
-              <h1 className="mt-10 font-serif text-5xl italic leading-[0.95] tracking-[-0.07em]">{question.title}</h1>
-              <p className="mt-5 max-w-lg text-sm leading-7 text-white/45">{question.explanation}</p>
-              <button type="button" className="mt-4 inline-flex items-center gap-2 text-xs text-white/40 hover:text-white"><CircleHelp className="size-4" />Explain this</button>
-              {question.options.length > 0 ? <div className="mt-8 grid gap-2">{question.options.map((option) => <button type="button" key={option} onClick={() => setAnswer(option)} className={`flex items-center justify-between rounded-2xl border px-4 py-4 text-left text-sm transition-colors ${answers[question.key] === option ? "border-white/55 bg-white text-black" : "border-white/10 bg-white/[0.025] text-white/65 hover:bg-white/[0.06]"}`}>{option}{answers[question.key] === option && <Check className="size-4" />}</button>)}</div> : <textarea value={answers[question.key] ?? ""} onChange={(event) => setAnswer(event.target.value)} placeholder="You can leave this blank" className="mt-8 min-h-32 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/30" />}
-              {saveError && <p className="mt-4 text-sm text-red-200">{saveError}</p>}
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row"><button type="button" onClick={() => { const next = { ...answers, [question.key]: "unknown" }; setAnswers(next); if (step === questions.length - 1) void saveAiPlan(); else setStep((value) => value + 1); }} className="h-11 rounded-full border border-white/10 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/50 hover:text-white">{step === questions.length - 1 ? "Skip & generate" : "Skip"}</button><button type="button" disabled={saving} onClick={() => { if (step === questions.length - 1) void saveAiPlan(); else setStep((value) => value + 1); }} className="group flex h-11 flex-1 items-center justify-center gap-3 rounded-full bg-white text-xs font-semibold uppercase tracking-[0.12em] text-black disabled:opacity-50">{saving ? (stage ?? "Generating…") : step === questions.length - 1 ? "Generate my plan" : "Continue"}<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></button></div>
-            </>
+            <div>
+              <div className="mt-8 flex items-center justify-between">
+                <p className="t-label">KOVA onboarding</p>
+                <span className="t-caption">{step + 1} / {questions.length}</span>
+              </div>
+              <div className="mt-5 h-1 overflow-hidden rounded-full bg-white/[0.08]">
+                <motion.div className="h-full rounded-full bg-white/85" initial={false} animate={{ width: `${((step + 1) / questions.length) * 100}%` }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} />
+              </div>
+              <motion.div key={step} initial={{ opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -28 }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+                <h1 className="t-h1 mt-10">{question.title}</h1>
+                <p className="t-body mt-4 max-w-lg">{question.explanation}</p>
+                {question.options.length > 0 ? (
+                  <div className="mt-8 grid gap-2.5 sm:grid-cols-2">
+                    {question.options.map((option) => (
+                      <SelectCard
+                        key={option}
+                        selected={answers[question.key] === option}
+                        title={option}
+                        onClick={() => {
+                          setAnswer(option);
+                          if (step === questions.length - 1) void saveAiPlan();
+                          else window.setTimeout(() => setStep((value) => value + 1), 200);
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <textarea
+                    value={answers[question.key] ?? ""}
+                    onChange={(event) => setAnswer(event.target.value)}
+                    placeholder="You can leave this blank"
+                    className="glass-field mt-8 min-h-32 resize-none p-4 text-sm leading-6"
+                  />
+                )}
+                {saveError && <p className="mt-4 text-sm text-red-300">{saveError}</p>}
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <GlassButton
+                    variant="ghost"
+                    onClick={() => {
+                      const next = { ...answers, [question.key]: "unknown" };
+                      setAnswers(next);
+                      if (step === questions.length - 1) void saveAiPlan();
+                      else setStep((value) => value + 1);
+                    }}
+                    disabled={saving}
+                  >
+                    {step === questions.length - 1 ? "Skip & generate" : "Skip"}
+                  </GlassButton>
+                  {question.options.length > 0 ? (
+                    <GlassButton
+                      variant="solid"
+                      size="lg"
+                      busy={saving}
+                      className="flex-1"
+                      onClick={() => {
+                        if (step === questions.length - 1) void saveAiPlan();
+                        else setStep((value) => value + 1);
+                      }}
+                    >
+                      {saving ? (stage ?? "Generating…") : step === questions.length - 1 ? "Generate my plan" : "Continue"}
+                    </GlassButton>
+                  ) : (
+                    <GlassButton
+                      variant="solid"
+                      size="lg"
+                      busy={saving}
+                      className="flex-1"
+                      onClick={() => {
+                        if (step === questions.length - 1) void saveAiPlan();
+                        else setStep((value) => value + 1);
+                      }}
+                    >
+                      {saving ? (stage ?? "Generating…") : step === questions.length - 1 ? "Generate my plan" : "Continue"}
+                      {!saving ? <ArrowRight className="size-4" /> : null}
+                    </GlassButton>
+                  )}
+                </div>
+              </motion.div>
+            </div>
           ) : null}
         </div>
       </AppShell>
@@ -246,26 +340,68 @@ export default function Plan() {
   return (
     <AppShell>
       <Seo title="Plan — KOVA AI" description="Build and manage your KOVA AI training plan." path="/dashboard/plan" />
-      <div className="mx-auto max-w-7xl"><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="eyebrow">Your training</p><h1 className="mt-3 font-serif text-6xl italic tracking-[-0.08em]">Plan.</h1><p className="mt-4 max-w-lg text-sm leading-6 text-white/45">A clear place for your workouts, recovery and progression.</p></div><button type="button" onClick={() => setCreating(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-xs font-semibold uppercase tracking-[0.12em] text-black"><Plus className="size-4" />Create plan</button></div>{error && <p className="mt-8 rounded-2xl border border-red-300/20 bg-red-300/5 p-4 text-sm text-red-200">Could not load your plans: {error}</p>}{isLoading ? <p className="mt-12 text-sm text-white/40">Loading your plans…</p> : plans.length === 0 ? <div className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.03] p-8 sm:p-12"><CalendarDays className="size-6 text-white/45" /><h2 className="mt-8 font-serif text-4xl italic tracking-[-0.06em]">No plan yet.</h2><p className="mt-3 max-w-md text-sm leading-7 text-white/45">Start with a guided setup or create a blank plan. KOVA never fills your history with made-up workouts.</p><button type="button" onClick={() => setCreating(true)} className="mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white">Open plan maker <ArrowRight className="size-4" /></button></div> : <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{plans.map((plan) => (
-        <div key={plan.id} className="group relative rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6 transition-colors hover:bg-white/[0.06]">
-          <Link to={`/dashboard/plan/${plan.id}`} className="absolute inset-0 z-0 rounded-[1.5rem]" aria-label={`Open ${plan.name}`} />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">{plan.source === "ai" ? "KOVA draft" : "Manual"} · {plan.status}</p>
-              <button
-                type="button"
-                onClick={() => setPlanToDelete(plan.id)}
-                className="flex size-7 items-center justify-center rounded-full text-white/25 opacity-0 transition-opacity hover:bg-red-300/10 hover:text-red-200 group-hover:opacity-100 focus-visible:opacity-100"
-                aria-label={`Delete ${plan.name}`}
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </div>
-            <h2 className="mt-8 font-serif text-3xl italic tracking-[-0.05em]">{plan.name}</h2>
-            <p className="mt-3 flex items-center gap-2 text-sm text-white/40">{plan.is_public ? <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-white/45">Public</span> : null}Open plan details <ArrowRight className="ml-1 inline size-4" /></p>
+      <div className="mx-auto max-w-6xl">
+        <motion.div {...pageMotion} className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <p className="t-label">Your training</p>
+            <h1 className="t-display mt-4">Plan.</h1>
+            <p className="t-body mt-4 max-w-lg">A clear place for your workouts, recovery and progression.</p>
           </div>
-        </div>
-      ))}</div>}</div>
+          <GlassButton variant="solid" size="lg" onClick={() => setCreating(true)}>
+            <Plus className="size-4" />
+            Create plan
+          </GlassButton>
+        </motion.div>
+
+        {error && <p className="mt-8 rounded-2xl border border-red-300/20 bg-red-300/5 p-4 text-sm text-red-200">Could not load your plans: {error}</p>}
+
+        {isLoading ? (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="skeleton h-48 rounded-[1.5rem]" />
+            <div className="skeleton h-48 rounded-[1.5rem]" />
+            <div className="skeleton h-48 rounded-[1.5rem]" />
+          </div>
+        ) : plans.length === 0 ? (
+          <GlassCard className="mt-10 p-8 sm:p-12">
+            <CalendarDays className="size-6 text-white/40" strokeWidth={1.6} />
+            <h2 className="t-h1 mt-7">No plan yet.</h2>
+            <p className="t-body mt-3 max-w-md">Start with a guided setup or create a blank plan. KOVA never fills your history with made-up workouts.</p>
+            <GlassButton variant="primary" size="lg" className="mt-7" onClick={() => setCreating(true)}>
+              Open plan maker
+              <ArrowRight className="size-4" />
+            </GlassButton>
+          </GlassCard>
+        ) : (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {plans.map((plan, index) => (
+              <motion.div key={plan.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05, duration: 0.45 }}>
+                <GlassCard interactive className="group relative h-full p-6">
+                  <Link to={`/dashboard/plan/${plan.id}`} className="absolute inset-0 z-0 rounded-[inherit]" aria-label={`Open ${plan.name}`} />
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between gap-3">
+                      <SectionHeader icon={plan.source === "ai" ? Sparkles : Dumbbell} label={`${plan.source === "ai" ? "KOVA draft" : "Manual"} · ${plan.status}`} />
+                      <button
+                        type="button"
+                        onClick={() => setPlanToDelete(plan.id)}
+                        className="relative z-20 flex size-7 items-center justify-center rounded-full text-white/25 opacity-0 transition-opacity hover:bg-red-300/10 hover:text-red-200 group-hover:opacity-100 focus-visible:opacity-100"
+                        aria-label={`Delete ${plan.name}`}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                    <h2 className="t-h2 mt-8">{plan.name}</h2>
+                    <p className="t-caption mt-3 flex items-center gap-2">
+                      {plan.is_public ? <span className="glass-chip h-6 px-2.5 text-[10px]">Public</span> : null}
+                      Open plan details
+                      <ArrowRight className="ml-1 inline size-3.5" />
+                    </p>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <AlertDialog open={Boolean(planToDelete)} onOpenChange={(open) => { if (!open) setPlanToDelete(null); }}>
         <AlertDialogContent>

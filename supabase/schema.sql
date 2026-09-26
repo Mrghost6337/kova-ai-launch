@@ -3,6 +3,18 @@
 
 create extension if not exists pgcrypto;
 
+-- Onboarding: first-run profile answers collected by the premium onboarding flow.
+-- Safe to rerun; new columns are simply added if missing.
+alter table public.profiles add column if not exists onboarding_completed boolean not null default false;
+alter table public.profiles add column if not exists age smallint;
+alter table public.profiles add column if not exists height_cm numeric;
+alter table public.profiles add column if not exists weight_kg numeric;
+alter table public.profiles add column if not exists goal text;
+alter table public.profiles add column if not exists training_frequency smallint;
+alter table public.profiles add column if not exists training_location text;
+alter table public.profiles add column if not exists equipment jsonb not null default '[]'::jsonb;
+alter table public.profiles add column if not exists discovery_source text;
+
 -- Gym selection: the live map gym picker stores the athlete's gym on the profile.
 -- Safe to rerun; new columns are simply added if missing.
 alter table public.profiles add column if not exists gym_name text;
