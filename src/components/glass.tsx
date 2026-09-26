@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Loader2, Monitor, Moon, Sun, X, type LucideIcon } from "lucide-react";
 import {
   createContext,
   useContext,
@@ -206,10 +206,10 @@ export function ToggleRow({
 
 /* ——— Theme switch ——————————————————————————————————————————————————— */
 
-const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: typeof Check }> = [
-  { value: "dark", label: "Dark", icon: X },
-  { value: "light", label: "Light", icon: Check },
-  { value: "system", label: "Auto", icon: Check },
+const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: LucideIcon }> = [
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "light", label: "Light", icon: Sun },
+  { value: "system", label: "Auto", icon: Monitor },
 ];
 
 export function ThemeSwitch({ className }: { className?: string }) {
@@ -224,7 +224,7 @@ export function ThemeSwitch({ className }: { className?: string }) {
         }}
         aria-hidden
       />
-      {THEME_OPTIONS.map(({ value, label }) => (
+      {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
           type="button"
@@ -240,7 +240,8 @@ export function ThemeSwitch({ className }: { className?: string }) {
               : "text-white/45 hover:text-white/75",
           )}
         >
-          {label}
+          <Icon className="size-3.5" strokeWidth={1.8} aria-hidden />
+          <span className="hidden sm:inline">{label}</span>
         </button>
       ))}
     </div>
@@ -434,12 +435,14 @@ export function SelectCard({
   selected,
   title,
   description,
+  icon: Icon,
   onClick,
   className,
 }: {
   selected: boolean;
   title: string;
   description?: string;
+  icon?: LucideIcon;
   onClick: () => void;
   className?: string;
 }) {
@@ -450,30 +453,35 @@ export function SelectCard({
       whileTap={{ scale: 0.985 }}
       aria-pressed={selected}
       className={cn(
-        "glass-card glass-card--hover relative w-full p-4 text-left sm:p-5",
+        "onboarding-selectable flex items-center gap-3.5",
         className,
       )}
     >
-      <AnimatePresence>
-        {selected ? (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="pointer-events-none absolute inset-0 rounded-[inherit] border border-white/35 bg-white/[0.06]"
-          />
-        ) : null}
-      </AnimatePresence>
-      <span className="relative flex items-center justify-between gap-3">
-        <span className="min-w-0">
-          <span className={cn("block text-sm", selected ? "text-white" : "text-white/78")}>{title}</span>
-          {description ? <span className="mt-1 block text-xs leading-5 text-white/38">{description}</span> : null}
+      {Icon ? (
+        <span
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+            selected
+              ? "bg-white/[0.14] text-[var(--accent-sky)]"
+              : "bg-white/[0.06] text-white/55",
+          )}
+          aria-hidden
+        >
+          <Icon className="size-[18px]" strokeWidth={1.7} />
         </span>
-        {selected ? (
-          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-white text-black">
-            <Check className="size-3" strokeWidth={2.4} />
-          </span>
-        ) : null}
+      ) : null}
+      <span className="min-w-0 flex-1">
+        <span className={cn("block text-sm", selected ? "text-white" : "text-white/78")}>{title}</span>
+        {description ? <span className="mt-0.5 block text-xs leading-5 text-white/38">{description}</span> : null}
+      </span>
+      <span
+        className={cn(
+          "flex size-5 shrink-0 items-center justify-center rounded-full transition-all",
+          selected ? "scale-100 bg-white text-black" : "scale-0 bg-transparent",
+        )}
+        aria-hidden
+      >
+        <Check className="size-3" strokeWidth={2.6} />
       </span>
     </motion.button>
   );

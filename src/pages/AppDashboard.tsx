@@ -247,7 +247,15 @@ export default function AppDashboard() {
                                 initial={{ height: 4 }}
                                 animate={{ height: `${Math.max(6, (bucket.count / maxDaySets) * 100)}%` }}
                                 transition={{ delay: 0.3 + index * 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                                className={`w-full rounded-lg ${isToday ? "bg-white/85" : bucket.count ? "bg-white/45" : "bg-white/[0.08]"}`}
+                                className={`w-full rounded-lg ${
+                                  isToday && bucket.count
+                                    ? "bg-[var(--accent-sky)] shadow-[0_0_18px_-4px_var(--accent-sky)]"
+                                    : isToday
+                                      ? "bg-white/85"
+                                      : bucket.count
+                                        ? "bg-white/45"
+                                        : "bg-white/[0.08]"
+                                }`}
                               />
                             </div>
                             <span className={`text-[10px] ${isToday ? "text-white/80" : "text-white/30"}`}>

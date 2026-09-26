@@ -76,10 +76,10 @@ function Sparkline({ values, className }: { values: number[]; className?: string
     <svg viewBox={`0 0 ${width} ${height}`} className={className} preserveAspectRatio="none" aria-hidden>
       <path
         d={`M ${path} L ${width},${height} L 0,${height} Z`}
-        fill="rgba(255,255,255,0.06)"
+        fill="var(--accent-sky-fade, rgba(56,189,248,0.09))"
         stroke="none"
       />
-      <path d={`M ${path}`} fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <path d={`M ${path}`} fill="none" stroke="var(--accent-sky)" strokeWidth="1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
