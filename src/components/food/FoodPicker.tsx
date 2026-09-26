@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { FOOD_CATEGORIES, findCategory } from "@/lib/food-categories";
 import { useFoodHistory } from "@/hooks/use-nutrition";
 import {
   formatServing,
@@ -164,6 +165,7 @@ export function FoodPicker({
   const searchFoodsAction = useAction(api.foodData.searchFoods);
   const lookupBarcodeAction = useAction(api.foodData.lookupBarcode);
   const popularFoodsAction = useAction(api.foodData.popularFoods);
+  const browseCategoryAction = useAction(api.foodData.browseCategory);
 
   const [mode, setMode] = useState<Mode>("search");
   const [query, setQuery] = useState("");
@@ -173,6 +175,11 @@ export function FoodPicker({
   const [favorites, setFavorites] = useState<RecentFood[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  // Category browsing
+  const [category, setCategory] = useState<string | null>(null);
+  const [categoryResults, setCategoryResults] = useState<FoodSearchResult[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   // Barcode
   const [barcode, setBarcode] = useState("");
@@ -190,6 +197,7 @@ export function FoodPicker({
   const [error, setError] = useState<string | null>(null);
 
   const searchToken = useRef(0);
+  const activeCategory = findCategory(category);
 
   useEffect(() => {
     if (!open) return;
@@ -205,6 +213,8 @@ export function FoodPicker({
     setSearchError(null);
     setRecents(loadRecentFoods());
     setFavorites(loadFavoriteFoods());
+    setCategory(null);
+    setCategoryResults([]);
     if (!popular.length) {
       void popularFoodsAction()
         .then((items) => setPopular(items.map(toClientResult)))
@@ -240,6 +250,27 @@ export function FoodPicker({
     }, 420);
     return () => window.clearTimeout(timer);
   }, [query, mode]);
+
+  // Category browse: cached server-side, instant on repeat taps.
+  useEffect(() => {
+    if (mode !== "search" || !category || query.trim()) return;
+    let cancelled = false;
+    setCategoryLoading(true);
+    void browseCategoryAction({ category })
+      .then((items) => {
+        if (!cancelled) setCategoryResults(items.map(toClientResult));
+      })
+      .catch(() => {
+        if (!cancelled) setCategoryResults([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCategoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, query, mode]);
 
   const preview = useMemo(() => {
     if (!selected) return null;
@@ -451,6 +482,39 @@ export function FoodPicker({
                 </div>
               )}
 
+              {/* Category filters */}
+              {mode === "search" && (
+                <div className="mt-3 -mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1 sm:-mx-6 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategory(null);
+                      setCategoryResults([]);
+                    }}
+                    className={cn(
+                      "shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                      category === null ? "border-white bg-white text-black" : "border-white/10 text-white/55 hover:text-white",
+                    )}
+                  >
+                    All
+                  </button>
+                  {FOOD_CATEGORIES.map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => setCategory(option.key)}
+                      className={cn(
+                        "shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                        category === option.key ? "border-white bg-white text-black" : "border-white/10 text-white/55 hover:text-white",
+                      )}
+                    >
+                      <span className="mr-1">{option.emoji}</span>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Barcode input */}
               {mode === "barcode" && (
                 <div className="mt-3">
@@ -502,7 +566,7 @@ export function FoodPicker({
                   )}
 
                   {/* Frequently logged — one tap re-opens the portion editor via search */}
-                  {!query.trim() && frequent.length > 0 && (
+                  {!query.trim() && !category && frequent.length > 0 && (
                     <section className="mt-4">
                       <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
                         <History className="size-3" />Foods you eat often
@@ -551,8 +615,60 @@ export function FoodPicker({
                     </section>
                   )}
 
+                  {/* Category browse results */}
+                  {!query.trim() && category && (
+                    <section className="mt-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+                          {activeCategory ? `${activeCategory.emoji} ${activeCategory.label}` : "Category"}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCategory(null);
+                            setCategoryResults([]);
+                          }}
+                          className="text-[10px] uppercase tracking-[0.14em] text-white/35 transition-colors hover:text-white"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      {categoryLoading ? (
+                        <div className="mt-2 space-y-2">
+                          {[0, 1, 2].map((index) => (
+                            <div key={index} className="flex items-center gap-3 rounded-2xl px-2 py-2">
+                              <div className="size-11 animate-pulse rounded-xl bg-white/[0.05]" />
+                              <div className="flex-1 space-y-1.5">
+                                <div className="h-3 w-1/2 animate-pulse rounded bg-white/[0.05]" />
+                                <div className="h-2.5 w-1/3 animate-pulse rounded bg-white/[0.04]" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : categoryResults.length ? (
+                        <ul className="mt-2 space-y-1">
+                          {categoryResults.map((item) => (
+                            <li key={item.id} className="relative">
+                              <button type="button" onClick={() => chooseFood(item)} className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 pr-11 text-left transition-colors hover:bg-white/[0.05]">
+                                <FoodThumb food={item} />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm text-white/85">{item.displayName}</span>
+                                  <span className="block truncate text-[11px] text-white/35">{item.brand ? `${item.brand} · ` : ""}{formatServing(item)} · {item.kcalPer100} kcal per 100 {item.unit}</span>
+                                </span>
+                                <Plus className="size-4 shrink-0 text-white/25" />
+                              </button>
+                              <FavoriteButton food={item} favorites={favorites} onToggle={handleFavoriteToggle} />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="py-5 text-center text-sm text-white/40">Nothing in this category yet — try a search.</p>
+                      )}
+                    </section>
+                  )}
+
                   {/* Popular suggestions */}
-                  {!query.trim() && (
+                  {!query.trim() && !category && (
                     <section className="mt-4">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">Popular worldwide</p>
                       {popular.length ? (

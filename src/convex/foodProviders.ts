@@ -4,8 +4,8 @@
  * - Open Food Facts (primary): branded/international products, images, barcodes.
  * - USDA FoodData Central: generic foods with reference nutrition values.
  *
- * Plain helper module (no Convex functions) so both foodData.ts and food.ts
- * can use the same normalization and search logic.
+ * Plain helper module (no Convex functions) so foodData.ts and food.ts can use
+ * the same normalization and search logic.
  */
 
 export const OFF_BASE = "https://world.openfoodfacts.org";
@@ -114,6 +114,42 @@ export async function offSearchUncached(query: string): Promise<NormalizedFood[]
 export async function offBarcodeUncached(barcode: string): Promise<NormalizedFood | null> {
   const products = await offFetch(`${OFF_BASE}/api/v2/product/${barcode}.json?fields=${OFF_FIELDS}`);
   return products.length ? normalizeOff(products[0]) : null;
+}
+
+/* ---------------- OFF category browsing ---------------- */
+
+/** Tag filter for OFF category/label browsing. */
+export type OffTag = { type: "categories" | "labels"; value: string };
+
+/**
+ * OFF search restricted to tags (e.g. categories "en:rices"). One request per
+ * tag, bounded to the first three, merged with dedupe. Returns [] when a tag
+ * has no well-formed products — callers merge seed results on top.
+ */
+export async function offCategorySearch(tags: OffTag[]): Promise<NormalizedFood[]> {
+  const usable = tags.slice(0, 3);
+  if (!usable.length) return [];
+
+  const perTag = await Promise.all(
+    usable.map(async (tag) => {
+      const param = tag.type === "categories" ? "categories_tags" : "labels_tags";
+      const url = `${OFF_BASE}/cgi/search.pl?action=process&json=1&page=1&page_size=20&${param}=${encodeURIComponent(tag.value)}&fields=${OFF_FIELDS}`;
+      const products = await offFetch(url).catch(() => []);
+      return products.map(normalizeOff).filter((item): item is NormalizedFood => item !== null);
+    }),
+  );
+
+  const seen = new Set<string>();
+  const merged: NormalizedFood[] = [];
+  for (const list of perTag) {
+    for (const item of list) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      merged.push(item);
+      if (merged.length >= 24) return merged;
+    }
+  }
+  return merged;
 }
 
 /* ---------------- USDA FoodData Central ---------------- */

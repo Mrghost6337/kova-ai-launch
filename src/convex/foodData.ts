@@ -4,7 +4,8 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { offSearchUncached, offBarcodeUncached, usdaSearchUncached, type NormalizedFood } from "./foodProviders";
+import { offSearchUncached, offBarcodeUncached, usdaSearchUncached, offCategorySearch, type NormalizedFood } from "./foodProviders";
+import { findCategory } from "../lib/food-categories";
 
 /**
  * Server-side food data integration for the KOVA Food page.
@@ -99,6 +100,58 @@ export const lookupBarcode = action({
     const product = await offBarcodeUncached(barcode);
     await ctx.runMutation(internal.foodCache.writeCache, { key, payload: product });
     return product;
+  },
+});
+
+/**
+ * Category browse for the FoodPicker: OFF tag-filtered products first, then
+ * seed-query results (OFF + USDA) for generic foods the tags missed. All
+ * merged, deduped and cached per category so repeat taps are instant.
+ */
+export const browseCategory = action({
+  args: { category: v.string() },
+  returns: v.array(SearchResult),
+  handler: async (ctx, args): Promise<NormalizedFood[]> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("You need to be signed in.");
+
+    const category = findCategory(args.category);
+    if (!category) return [];
+
+    const key = `category:v1:${category.key}`;
+    const hit = await ctx.runQuery(internal.foodCache.readCache, { key });
+    if (hit && Date.now() - hit.createdAt < CACHE_TTL_MS) return hit.payload as NormalizedFood[];
+
+    const apiKey = process.env.USDA_API_KEY;
+    const tagTags = category.categories?.map((value) => ({ type: "categories" as const, value }));
+    const labelTags = category.labels?.map((value) => ({ type: "labels" as const, value }));
+    const seeds = category.seeds ?? [];
+
+    const [tagResults, ...seedResults] = await Promise.all([
+      offCategorySearch([...(tagTags ?? []), ...(labelTags ?? [])]).catch(() => []),
+      ...seeds.slice(0, 4).map(async (seed) => {
+        const off = await offSearchUncached(seed).then((items) => items[0]).catch(() => null);
+        if (off) return off;
+        if (!apiKey) return null;
+        try {
+          const usda = await usdaSearchUncached(seed, apiKey);
+          return usda[0] ?? null;
+        } catch {
+          return null;
+        }
+      }),
+    ]);
+
+    const merged: NormalizedFood[] = [];
+    const seen = new Set<string>();
+    for (const item of [...tagResults, ...seedResults]) {
+      if (!item || seen.has(item.id)) continue;
+      seen.add(item.id);
+      merged.push(item);
+      if (merged.length >= 30) break;
+    }
+    await ctx.runMutation(internal.foodCache.writeCache, { key, payload: merged });
+    return merged;
   },
 });
 
