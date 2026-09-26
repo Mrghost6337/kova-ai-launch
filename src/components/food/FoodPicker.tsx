@@ -12,8 +12,11 @@ import {
   Minus,
   Pencil,
   Plus,
+  ScanLine,
   Search,
+  Sparkles,
   Trash2,
+  TriangleAlert,
   UtensilsCrossed,
   X,
 } from "lucide-react";
@@ -23,6 +26,7 @@ import { api } from "@/convex/_generated/api";
 import { FOOD_CATEGORIES, findCategory } from "@/lib/food-categories";
 import { useFoodHistory } from "@/hooks/use-nutrition";
 import {
+  availableUnits,
   formatServing,
   loadFavoriteFoods,
   loadRecentFoods,
@@ -30,9 +34,12 @@ import {
   removeRecentFood,
   scaleResult,
   toggleFavoriteFood,
+  UNIT_LABELS,
   type FoodSearchResult,
+  type PortionUnit,
   type RecentFood,
 } from "@/lib/food-search";
+import { BarcodeCamera } from "@/components/food/BarcodeCamera";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { cn } from "@/lib/utils";
 
@@ -62,26 +69,45 @@ const MEALS: Array<{ key: Meal; label: string; icon: typeof Apple }> = [
   { key: "snack", label: "Snacks", icon: Flame },
 ];
 
+/** Dish words that trigger complete-dish suggestion chips while typing. */
+const DISH_SUGGESTIONS: ReadonlyArray<{ query: string; label: string }> = [
+  { query: "chicken and rice", label: "Chicken & rice" },
+  { query: "lasagna", label: "Lasagna" },
+  { query: "spaghetti bolognese", label: "Spaghetti bolognese" },
+  { query: "pizza", label: "Pizza" },
+  { query: "caesar salad", label: "Caesar salad" },
+  { query: "chicken curry", label: "Chicken curry" },
+  { query: "club sandwich", label: "Sandwich" },
+  { query: "fried rice", label: "Fried rice" },
+];
+
+const DISH_WORDS = DISH_SUGGESTIONS.flatMap((item) => item.query.split(" "));
+
 const ease = [0.22, 1, 0.36, 1] as const;
 
 type Mode = "search" | "portion" | "barcode" | "manual";
 
-/** Map a backend result (off:/usda: id) onto the client result shape. */
+/** Map a backend Food Engine result onto the client result shape. */
 function toClientResult(item: {
   id: string;
   source: string;
   name: string;
   brand: string | null;
   imageUrl: string | null;
+  allergens?: string | null;
   servingGrams: number | null;
+  pieceGrams?: number | null;
   unit: "g" | "ml";
   per100: { kcal: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number; sodium: number };
+  dish?: boolean;
+  estimate?: boolean;
 }): FoodSearchResult {
   return {
     id: item.id,
     name: item.name,
     brand: item.brand,
     displayName: item.name,
+    source: item.source,
     kcalPer100: item.per100.kcal,
     proteinPer100: item.per100.protein,
     carbsPer100: item.per100.carbs,
@@ -90,10 +116,20 @@ function toClientResult(item: {
     sugarPer100: item.per100.sugar,
     sodiumPer100: item.per100.sodium,
     servingGrams: item.servingGrams,
+    pieceGrams: item.pieceGrams ?? null,
     unit: item.unit,
     imageUrl: item.imageUrl,
+    allergens: item.allergens ?? null,
+    isDish: item.dish ?? false,
+    isEstimate: item.estimate ?? false,
   };
 }
+
+const SOURCE_LABEL: Record<string, string> = {
+  off: "Open Food Facts",
+  usda: "USDA",
+  dietly: "Dietly",
+};
 
 function MacroPill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -170,6 +206,7 @@ export function FoodPicker({
   const [mode, setMode] = useState<Mode>("search");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FoodSearchResult[]>([]);
+  const [searchNote, setSearchNote] = useState<string | null>(null);
   const [popular, setPopular] = useState<FoodSearchResult[]>([]);
   const [recents, setRecents] = useState<RecentFood[]>([]);
   const [favorites, setFavorites] = useState<RecentFood[]>([]);
@@ -183,12 +220,14 @@ export function FoodPicker({
 
   // Barcode
   const [barcode, setBarcode] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [barcodeBusy, setBarcodeBusy] = useState(false);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
 
   // Portion state for the selected food
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
-  const [grams, setGrams] = useState(100);
+  const [amount, setAmount] = useState(100);
+  const [portionUnit, setPortionUnit] = useState<PortionUnit>("g");
   const [times, setTimes] = useState(1);
 
   // Manual entry
@@ -204,10 +243,13 @@ export function FoodPicker({
     setMode("search");
     setQuery("");
     setResults([]);
+    setSearchNote(null);
     setSelected(null);
-    setGrams(100);
+    setAmount(100);
+    setPortionUnit("g");
     setTimes(1);
     setBarcode("");
+    setCameraOpen(false);
     setManual({ name: "", calories: "", protein: "", carbs: "", fat: "" });
     setError(null);
     setSearchError(null);
@@ -223,26 +265,29 @@ export function FoodPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Debounced worldwide search
+  // Debounced unified search through the Food Engine.
   useEffect(() => {
     if (mode !== "search") return;
     const token = ++searchToken.current;
     const trimmed = query.trim();
     if (trimmed.length < 2) {
       setResults([]);
+      setSearchNote(null);
       setSearching(false);
       return;
     }
     setSearching(true);
     const timer = window.setTimeout(async () => {
       try {
-        const found = await searchFoodsAction({ query: trimmed });
+        const response = await searchFoodsAction({ query: trimmed });
         if (token !== searchToken.current) return;
-        setResults(found.map(toClientResult));
-        setSearchError(found.length ? null : "Nothing found — try another name (e.g. 'chicken', 'banana', 'rice').");
+        setResults(response.items.map(toClientResult));
+        setSearchNote(response.note?.corrected ? `Searched for "${response.note.corrected}"` : null);
+        setSearchError(response.items.length ? null : "Nothing found — try another name (e.g. 'chicken', 'banana', 'rice').");
       } catch (cause) {
         if (token !== searchToken.current) return;
         setResults([]);
+        setSearchNote(null);
         setSearchError(cause instanceof Error ? cause.message : "Search failed.");
       } finally {
         if (token === searchToken.current) setSearching(false);
@@ -274,12 +319,18 @@ export function FoodPicker({
 
   const preview = useMemo(() => {
     if (!selected) return null;
-    return scaleResult(selected, { grams, times });
-  }, [selected, grams, times]);
+    return scaleResult(selected, { amount, unit: portionUnit, times });
+  }, [selected, amount, portionUnit, times]);
 
   const chooseFood = (food: FoodSearchResult) => {
     setSelected(food);
-    setGrams(food.servingGrams ?? 100);
+    if (food.servingGrams) {
+      setPortionUnit("serving");
+      setAmount(1);
+    } else {
+      setPortionUnit(food.unit);
+      setAmount(100);
+    }
     setTimes(1);
     setMode("portion");
   };
@@ -290,13 +341,13 @@ export function FoodPicker({
   };
 
   const quickAdd = async (food: FoodSearchResult, source: FoodPickerEntry["source"] = "search") => {
-    const portion = scaleResult(food, { grams: food.servingGrams ?? 100, times: 1 });
+    const portion = scaleResult(food, { amount: food.servingGrams ?? 100, unit: food.unit, times: 1 });
     setError(null);
     try {
       await onAdd({
         meal,
         ...portion,
-        quantity: food.servingGrams ?? 100,
+        quantity: portion.grams,
         unit: food.unit,
         food_id: food.id,
         image_url: food.imageUrl,
@@ -316,8 +367,8 @@ export function FoodPicker({
       await onAdd({
         meal,
         ...preview,
-        quantity: grams,
-        unit: selected.unit,
+        quantity: Math.round(preview.grams),
+        unit: portionUnit,
         food_id: selected.id,
         image_url: selected.imageUrl,
         source: "search",
@@ -331,22 +382,27 @@ export function FoodPicker({
     }
   };
 
-  const commitBarcode = async () => {
+  const runBarcodeLookup = async (value: string) => {
     setBarcodeBusy(true);
     setBarcodeError(null);
     try {
-      const found = await lookupBarcodeAction({ barcode });
+      const found = await lookupBarcodeAction({ barcode: value });
       if (!found) {
-        setBarcodeError("No product found for this barcode.");
+        setBarcodeError("Product not found. Search for it by name instead.");
         return;
       }
       chooseFood(toClientResult(found));
       setBarcode("");
+      setCameraOpen(false);
     } catch (cause) {
       setBarcodeError(cause instanceof Error ? cause.message : "Barcode lookup failed.");
     } finally {
       setBarcodeBusy(false);
     }
+  };
+
+  const commitBarcode = async () => {
+    await runBarcodeLookup(barcode);
   };
 
   const commitManual = async () => {
@@ -373,6 +429,14 @@ export function FoodPicker({
       setSaving(false);
     }
   };
+
+  const dishChips = useMemo(() => {
+    const words = query.toLowerCase().split(" ").filter(Boolean);
+    if (!words.length || !words.some((word) => DISH_WORDS.includes(word))) return [];
+    return DISH_SUGGESTIONS.slice(0, 6);
+  }, [query]);
+
+  const selectedUnits = selected ? availableUnits(selected) : [];
 
   return (
     <AnimatePresence>
@@ -469,7 +533,7 @@ export function FoodPicker({
                       autoFocus
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Search any food or product…"
+                      placeholder="Search any food, brand or dish…"
                       className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] pl-11 pr-10 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/30"
                     />
                     {searching && <Loader2 className="absolute right-4 top-1/2 size-4 -translate-y-1/2 animate-spin text-white/40" />}
@@ -479,6 +543,27 @@ export function FoodPicker({
                       </button>
                     )}
                   </div>
+                  {searchNote && !searching && (
+                    <p className="mt-2 flex items-center gap-1.5 text-[11px] text-kova-sky/80">
+                      <Sparkles className="size-3" />{searchNote}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Dish suggestion chips while typing dish-like queries */}
+              {mode === "search" && dishChips.length > 0 && query.trim() && (
+                <div className="mt-2 -mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1 sm:-mx-6 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {dishChips.map((chip) => (
+                    <button
+                      key={chip.query}
+                      type="button"
+                      onClick={() => setQuery(chip.query)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-kova-amber/25 bg-kova-amber/[0.07] px-3 py-1.5 text-[11px] text-white/80 transition-colors hover:text-white"
+                    >
+                      <ChefHat className="size-3 text-kova-amber" />{chip.label}
+                    </button>
+                  ))}
                 </div>
               )}
 
@@ -515,12 +600,12 @@ export function FoodPicker({
                 </div>
               )}
 
-              {/* Barcode input */}
+              {/* Barcode input + live camera */}
               {mode === "barcode" && (
                 <div className="mt-3">
                   <div className="flex gap-2">
                     <input
-                      autoFocus
+                      autoFocus={!cameraOpen}
                       inputMode="numeric"
                       value={barcode}
                       onChange={(event) => setBarcode(event.target.value)}
@@ -540,7 +625,18 @@ export function FoodPicker({
                     </button>
                   </div>
                   {barcodeError && <p className="mt-2 text-sm text-red-200">{barcodeError}</p>}
-                  <p className="mt-2 text-[11px] leading-4 text-white/30">Type the digits below the barcode — works with products from all over the world. The full camera scanner is not available in the browser yet.</p>
+                  {!cameraOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => setCameraOpen(true)}
+                      className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-[11px] text-white/60 transition-colors hover:text-white"
+                    >
+                      <ScanLine className="size-3.5" />Scan with the camera
+                    </button>
+                  ) : (
+                    <BarcodeCamera open={cameraOpen} onClose={() => setCameraOpen(false)} onDetected={(value) => setBarcode(value)} />
+                  )}
+                  <p className="mt-2 text-[11px] leading-4 text-white/30">Point the camera at a barcode, or type the digits below it. Products come from Open Food Facts worldwide.</p>
                 </div>
               )}
             </div>
@@ -703,8 +799,13 @@ export function FoodPicker({
                               <button type="button" onClick={() => chooseFood(item)} className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 pr-11 text-left transition-colors hover:bg-white/[0.05]">
                                 <FoodThumb food={item} />
                                 <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm text-white/85">{item.displayName}</span>
-                                  <span className="block truncate text-[11px] text-white/35">{item.brand ? `${item.brand} · ` : ""}{item.kcalPer100} kcal per 100 {item.unit}{item.servingGrams ? ` · ${item.servingGrams}${item.unit} serving` : ""}</span>
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="min-w-0 truncate text-sm text-white/85">{item.displayName}</span>
+                                    {item.isDish && <ChefHat className="size-3 shrink-0 text-kova-amber" aria-label="Complete dish" />}
+                                  </span>
+                                  <span className="block truncate text-[11px] text-white/35">
+                                    {item.brand ? `${item.brand} · ` : ""}{SOURCE_LABEL[item.source] ?? item.source} · {item.kcalPer100} kcal per 100 {item.unit}{item.servingGrams ? ` · ${item.servingGrams}${item.unit} serving` : ""}
+                                  </span>
                                 </span>
                                 <Plus className="size-4 shrink-0 text-white/25" />
                               </button>
@@ -740,59 +841,94 @@ export function FoodPicker({
                   <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
                     <FoodThumb food={selected} size="lg" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-white/90">{selected.displayName}</p>
+                      <p className="flex items-center gap-1.5">
+                        <span className="min-w-0 truncate text-sm font-medium text-white/90">{selected.displayName}</span>
+                        {selected.isDish && <ChefHat className="size-3.5 shrink-0 text-kova-amber" aria-label="Complete dish" />}
+                      </p>
                       <p className="text-[11px] text-white/35">{selected.brand ? `${selected.brand} · ` : ""}{formatServing(selected)}</p>
                       <p className="mt-1 text-[11px] leading-4 text-white/45">
                         {selected.kcalPer100} kcal · {selected.proteinPer100}P · {selected.carbsPer100}C · {selected.fatPer100}F per 100 {selected.unit}
                       </p>
+                      <p className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-white/25">Source: {SOURCE_LABEL[selected.source] ?? selected.source}</p>
                     </div>
                     <FavoriteButton food={selected} favorites={favorites} onToggle={handleFavoriteToggle} />
                   </div>
 
-                  {/* Quick portion chips */}
+                  {(selected.isEstimate || selected.isDish) && (
+                    <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-kova-amber/90">
+                      <TriangleAlert className="mt-0.5 size-3 shrink-0" />
+                      {selected.isEstimate
+                        ? "Estimated values from the source — treat them as an indication, not a measured label."
+                        : "Complete dish: values are a database reference for a typical preparation, not this exact recipe."}
+                    </p>
+                  )}
+
+                  {/* Unit selector — only units that make sense for this food */}
                   <div className="mt-4 flex flex-wrap gap-1.5">
-                    {[
-                      selected.servingGrams ? { label: `1 serving (${selected.servingGrams})`, grams: selected.servingGrams } : null,
-                      { label: "50", grams: 50 },
-                      { label: "100", grams: 100 },
-                      { label: "150", grams: 150 },
-                      { label: "200", grams: 200 },
-                      { label: "250", grams: 250 },
-                    ]
-                      .filter((chip): chip is { label: string; grams: number } => chip !== null)
-                      .map((chip) => (
+                    {selectedUnits.map((unitOption) => (
+                      <button
+                        key={unitOption}
+                        type="button"
+                        onClick={() => {
+                          if (unitOption === portionUnit) return;
+                          if (unitOption === "serving") setAmount(1);
+                          else if (unitOption === "piece") setAmount(1);
+                          else if (portionUnit === "serving" || portionUnit === "piece") setAmount(100);
+                          setPortionUnit(unitOption);
+                        }}
+                        className={cn(
+                          "rounded-full border px-3.5 py-1.5 text-xs transition-colors",
+                          portionUnit === unitOption ? "border-white bg-white text-black" : "border-white/10 text-white/55 hover:text-white",
+                        )}
+                      >
+                        {UNIT_LABELS[unitOption]}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Quick portion chips */}
+                  {(portionUnit === selected.unit || portionUnit === "g" || portionUnit === "ml") && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {[50, 100, 150, 200, 250].map((chip) => (
                         <button
-                          key={chip.label}
+                          key={chip}
                           type="button"
-                          onClick={() => setGrams(chip.grams)}
+                          onClick={() => {
+                            setPortionUnit(selected.unit);
+                            setAmount(chip);
+                          }}
                           className={cn(
                             "rounded-full border px-3.5 py-1.5 text-xs transition-colors",
-                            grams === chip.grams ? "border-white bg-white text-black" : "border-white/10 text-white/55 hover:text-white",
+                            portionUnit === selected.unit && amount === chip ? "border-white bg-white text-black" : "border-white/10 text-white/55 hover:text-white",
                           )}
                         >
-                          {chip.label} {selected.unit}
+                          {chip} {selected.unit}
                         </button>
                       ))}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Amount + times steppers */}
                   <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Amount</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Amount ({UNIT_LABELS[portionUnit]})</p>
                       <div className="mt-2 flex items-center justify-between">
-                        <StepperButton onClick={() => setGrams((value) => Math.max(5, value - 10))} label="Less" />
+                        <StepperButton onClick={() => setAmount((value) => Math.max(portionUnit === "serving" || portionUnit === "piece" ? 1 : 1, value - (portionUnit === "g" || portionUnit === "ml" ? 10 : 1)))} label="Less" />
                         <div className="text-center">
                           <input
                             type="number"
                             min={1}
-                            max={3000}
-                            value={grams}
-                            onChange={(event) => setGrams(Math.max(1, Math.min(3000, Number(event.target.value) || 1)))}
+                            max={portionUnit === "kg" || portionUnit === "l" ? 3 : 3000}
+                            step={portionUnit === "kg" || portionUnit === "l" ? 0.1 : 1}
+                            value={amount}
+                            onChange={(event) => {
+                              const max = portionUnit === "kg" || portionUnit === "l" ? 3 : 3000;
+                              setAmount(Math.max(0.1, Math.min(max, Number(event.target.value) || 1)));
+                            }}
                             className="w-20 bg-transparent text-center text-3xl font-semibold tracking-tight text-white outline-none"
                           />
-                          <span className="ml-1 text-sm text-white/40">{selected.unit}</span>
                         </div>
-                        <StepperButton onClick={() => setGrams((value) => Math.min(3000, value + 10))} label="More" plus />
+                        <StepperButton onClick={() => setAmount((value) => Math.min(portionUnit === "kg" || portionUnit === "l" ? 3 : 3000, value + (portionUnit === "g" || portionUnit === "ml" ? 10 : 1)))} label="More" plus />
                       </div>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
@@ -822,6 +958,11 @@ export function FoodPicker({
                     <p className="mt-1.5 text-[11px] text-white/40">
                       {preview.grams}{selected.unit} total · {preview.fiber_g}g fiber · {preview.sugar_g}g sugar · {preview.sodium_mg}mg sodium
                     </p>
+                    {selected.allergens && (
+                      <p className="mt-2 border-t border-white/10 pt-2 text-[11px] leading-4 text-white/50">
+                        <span className="text-white/35">Allergens:</span> {selected.allergens}
+                      </p>
+                    )}
                   </motion.div>
 
                   {error && <p className="mt-3 text-sm text-red-200">{error}</p>}
