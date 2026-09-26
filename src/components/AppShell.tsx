@@ -275,7 +275,8 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
-      <main className="mobile-content px-4 pb-[calc(128px+env(safe-area-inset-bottom))] pt-2">{children}</main>
+      {/* Content clearance: dock (≈74px) + float margin (12px) + home indicator. */}
+      <main className="mobile-content px-4 pb-[calc(112px+max(12px,env(safe-area-inset-bottom)))] pt-2">{children}</main>
       <MobileNav />
     </div>
   );

@@ -1,8 +1,8 @@
 "use node";
 
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { FOOD101_DISHES } from "./food101Dishes";
 import { matchFoodByName } from "./foodProviders";
 
@@ -21,6 +21,13 @@ import { matchFoodByName } from "./foodProviders";
  *      matched: false and zero values — the user edits them manually or
  *      removes them. Nothing is invented here; nothing is stored.
  *
+ * The app authenticates via Supabase, so there is no Convex session to gate
+ * on. The scan (the only paid call) is protected by a lightweight abuse
+ * guard instead: an anonymous client-generated session id (random id in
+ * localStorage, not an auth token) is rate limited to 30 scans per rolling
+ * hour, tracked in the foodCache table. Public database lookups in
+ * foodData.ts stay ungated.
+ *
  * FoodLMM (https://github.com/YuehaoYin/FoodLMM) was evaluated as the primary
  * recognizer but requires a CUDA GPU (LISA-7B + SAM ViT-H, flash-attn,
  * deepspeed) and ships no hosted inference API or license file, so it cannot
@@ -33,6 +40,8 @@ import { matchFoodByName } from "./foodProviders";
  */
 
 const DEFAULT_VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct";
+const SCAN_LIMIT_PER_HOUR = 30;
+const SCAN_WINDOW_MS = 60 * 60 * 1000;
 
 const DISH_VOCABULARY = FOOD101_DISHES.join(", ");
 
@@ -97,6 +106,8 @@ export const analyzeMeal = action({
     imageBase64: v.string(), // Raw base64 (no data: prefix)
     mimeType: v.string(), // e.g. image/jpeg
     mealHint: v.optional(v.string()),
+    /** Anonymous client session id (localStorage random id) for rate limiting. */
+    sessionId: v.optional(v.string()),
   },
   returns: v.object({
     items: v.array(
@@ -118,9 +129,15 @@ export const analyzeMeal = action({
     note: v.string(),
   }),
   handler: async (ctx, args): Promise<AnalysisResult> => {
-    await getAuthUserId(ctx).then((userId) => {
-      if (!userId) throw new Error("You need to be signed in to scan food.");
-    });
+    // Rolling-hour rate limit per anonymous session (paid OpenRouter call).
+    const sessionKey = `scan-rate:v1:${(args.sessionId ?? "anonymous").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64)}`;
+    const now = Date.now();
+    const rateRow = await ctx.runQuery(internal.foodCache.readCache, { key: sessionKey });
+    const stamps = Array.isArray(rateRow?.payload) ? (rateRow.payload as number[]).filter((stamp) => now - stamp < SCAN_WINDOW_MS) : [];
+    if (stamps.length >= SCAN_LIMIT_PER_HOUR) {
+      throw new Error("You've reached the scan limit for this hour. Try again a little later.");
+    }
+    await ctx.runMutation(internal.foodCache.writeCache, { key: sessionKey, payload: [...stamps, now] });
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {

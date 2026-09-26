@@ -1,6 +1,5 @@
 "use node";
 
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -46,15 +45,12 @@ const SearchResult = v.object({
 
 /**
  * Unified food search: OFF primary, USDA merged in when a key is configured.
- * Cached server-side per query.
+ * Public data only — no user gate; results are cached server-side per query.
  */
 export const searchFoods = action({
   args: { query: v.string() },
   returns: v.array(SearchResult),
   handler: async (ctx, args): Promise<NormalizedFood[]> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("You need to be signed in to search foods.");
-
     const query = args.query.trim().slice(0, 80);
     if (query.length < 2) return [];
 
@@ -87,9 +83,6 @@ export const lookupBarcode = action({
   args: { barcode: v.string() },
   returns: v.union(SearchResult, v.null()),
   handler: async (ctx, args): Promise<NormalizedFood | null> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("You need to be signed in to scan barcodes.");
-
     const barcode = args.barcode.replace(/\D/g, "").slice(0, 20);
     if (barcode.length < 6) return null;
 
@@ -112,9 +105,6 @@ export const browseCategory = action({
   args: { category: v.string() },
   returns: v.array(SearchResult),
   handler: async (ctx, args): Promise<NormalizedFood[]> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("You need to be signed in.");
-
     const category = findCategory(args.category);
     if (!category) return [];
 
@@ -160,9 +150,6 @@ export const popularFoods = action({
   args: {},
   returns: v.array(SearchResult),
   handler: async (ctx): Promise<NormalizedFood[]> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("You need to be signed in.");
-
     const key = "popular:v1";
     const hit = await ctx.runQuery(internal.foodCache.readCache, { key });
     if (hit && Date.now() - hit.createdAt < CACHE_TTL_MS) return hit.payload as NormalizedFood[];

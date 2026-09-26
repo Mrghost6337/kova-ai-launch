@@ -18,6 +18,21 @@ export type DetectedFood = {
   imageUrl: string | null;
 };
 
+/** Anonymous, non-identifying session id used only for scan rate limiting. */
+function getScanSessionId(): string {
+  const KEY = "kova.scan.session.v1";
+  try {
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/-/g, "");
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return "anonymous";
+  }
+}
+
 /**
  * Runs the Scan-with-AI pipeline through the Convex backend: the vision model
  * recognizes foods, nutrition values come from Open Food Facts / USDA.
@@ -38,7 +53,7 @@ export function useFoodAi() {
         });
         const base64 = dataUrl.split(",")[1] ?? "";
         const mimeType = dataUrl.slice(5, dataUrl.indexOf(";")) || "image/jpeg";
-        return await analyze({ imageBase64: base64, mimeType, mealHint });
+        return await analyze({ imageBase64: base64, mimeType, mealHint, sessionId: getScanSessionId() });
       } finally {
         setIsAnalyzing(false);
       }
