@@ -111,7 +111,7 @@ export function useFoodEntries(userId: string | undefined, date: string) {
       if (!supabase || !userId) throw new Error("You must be signed in.");
       const result = await supabase
         .from("food_entries")
-        .insert({ ...entry, user_id: userId, logged_date: date })
+        .insert({ source: "search", ...entry, user_id: userId, logged_date: date })
         .select()
         .single();
       if (result.error) throw result.error;
@@ -121,15 +121,106 @@ export function useFoodEntries(userId: string | undefined, date: string) {
     [userId, date],
   );
 
-  const removeEntry = useCallback(
-    async (entryId: string) => {
+  const updateEntry = useCallback(
+    async (entryId: string, changes: Database["public"]["Tables"]["food_entries"]["Update"]) => {
       if (!supabase || !userId) throw new Error("You must be signed in.");
-      const result = await supabase.from("food_entries").delete().eq("id", entryId).eq("user_id", userId);
+      const result = await supabase
+        .from("food_entries")
+        .update(changes)
+        .eq("id", entryId)
+        .eq("user_id", userId)
+        .select()
+        .single();
       if (result.error) throw result.error;
-      setEntries((current) => current.filter((entry) => entry.id !== entryId));
+      setEntries((current) => current.map((entry) => (entry.id === entryId ? result.data : entry)));
+      return result.data;
     },
     [userId],
   );
 
-  return { entries, isLoading, error, reload: load, addEntry, removeEntry };
+  const removeEntry = useCallback(
+    async (entryId: string) => {
+      if (!supabase || !userId) throw new Error("You must be signed in.");
+      // Optimistic removal so totals and the list update instantly.
+      let removed: FoodEntry | undefined;
+      setEntries((current) => {
+        removed = current.find((entry) => entry.id === entryId);
+        return current.filter((entry) => entry.id !== entryId);
+      });
+      const result = await supabase.from("food_entries").delete().eq("id", entryId).eq("user_id", userId);
+      if (result.error) {
+        // Roll back so the UI never loses a row the database still has.
+        if (removed) setEntries((current) => [...current, removed as FoodEntry].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+        throw result.error;
+      }
+    },
+    [userId],
+  );
+
+  return { entries, isLoading, error, reload: load, addEntry, updateEntry, removeEntry };
+}
+
+/**
+ * Lightweight food history used for "foods you eat often" suggestions.
+ * Reads only the user's own rows via RLS; ranks by frequency, most recent first.
+ */
+export function useFoodHistory(userId: string | undefined, limit = 12) {
+  const [items, setItems] = useState<FoodEntry[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!supabase || !userId) {
+      setItems([]);
+      return;
+    }
+    void supabase
+      .from("food_entries")
+      .select("name, image_url")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(150)
+      .then(({ data }: { data: Array<{ name: string; image_url: string | null }> | null }) => {
+        if (cancelled) return;
+        const counts = new Map<string, { count: number; image_url: string | null }>();
+        for (const row of data ?? []) {
+          const key = row.name.trim().toLowerCase();
+          const existing = counts.get(key);
+          if (existing) existing.count += 1;
+          else counts.set(key, { count: 1, image_url: row.image_url });
+        }
+        const ranked = [...counts.entries()]
+          .sort((a, b) => b[1].count - a[1].count)
+          .slice(0, limit)
+          .map(([name, meta]) => ({ name: name.replace(/\s*[x×]\d+$/i, ""), image_url: meta.image_url, count: meta.count }));
+        setItems(ranked as unknown as FoodEntry[]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, limit]);
+
+  return items;
+}
+
+/** A short, honest daily insight computed from real logged data. */
+export function buildInsight(targets: NutritionTarget | null, entries: FoodEntry[]): string | null {
+  if (!entries.length) return null;
+  const totals = entries.reduce(
+    (sum, entry) => ({
+      calories: sum.calories + entry.calories,
+      protein: sum.protein + entry.protein_g,
+      carbs: sum.carbs + entry.carbs_g,
+      fat: sum.fat + entry.fat_g,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 },
+  );
+  const meals = new Set(entries.map((entry) => entry.meal)).size;
+  if (targets) {
+    const proteinGap = targets.protein_target - totals.protein;
+    if (proteinGap > 0 && proteinGap >= 20) return `You are ${proteinGap} g below your protein target.`;
+    if (totals.calories > targets.calorie_target * 1.02) return `You are ${totals.calories - targets.calorie_target} kcal over today's target.`;
+    if (targets.calorie_target - totals.calories <= Math.round(targets.calorie_target * 0.08)) return "Your calories are close to today's target.";
+  }
+  if (meals >= 3) return `You've logged ${meals} meals today — ${totals.calories.toLocaleString()} kcal in total.`;
+  return `You've logged ${totals.calories.toLocaleString()} kcal so far today.`;
 }

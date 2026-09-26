@@ -343,6 +343,19 @@ create policy "Users can manage own nutrition targets" on public.nutrition_targe
 drop policy if exists "Users can manage own food entries" on public.food_entries;
 create policy "Users can manage own food entries" on public.food_entries for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Food page v2: richer entries (quantity + unit, micros, source) so the log can
+-- be edited and re-scaled later. Safe to rerun; columns are added when missing.
+alter table public.food_entries add column if not exists food_id text;
+alter table public.food_entries add column if not exists image_url text;
+alter table public.food_entries add column if not exists quantity numeric;
+alter table public.food_entries add column if not exists unit text;
+alter table public.food_entries add column if not exists fiber_g integer not null default 0 check (fiber_g between 0 and 300);
+alter table public.food_entries add column if not exists sugar_g integer not null default 0 check (sugar_g between 0 and 500);
+alter table public.food_entries add column if not exists sodium_mg integer not null default 0 check (sodium_mg between 0 and 20000);
+alter table public.food_entries add column if not exists source text not null default 'search' check (source in ('search', 'barcode', 'ai', 'manual'));
+
+create index if not exists food_entries_user_recent_idx on public.food_entries(user_id, created_at desc);
+
 -- Plan sharing: a public flag on plans plus read policies so shared plans can be
 -- viewed by any signed-in athlete (read-only for non-owners). A plan sent to a
 -- specific user via plan_shares is readable by that recipient even when private.

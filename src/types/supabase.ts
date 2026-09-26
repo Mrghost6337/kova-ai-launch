@@ -381,6 +381,14 @@ export type Database = {
           protein_g: number;
           carbs_g: number;
           fat_g: number;
+          food_id: string | null;
+          image_url: string | null;
+          quantity: number | null;
+          unit: string | null;
+          fiber_g: number;
+          sugar_g: number;
+          sodium_mg: number;
+          source: "search" | "barcode" | "ai" | "manual";
           created_at: string;
         };
         Insert: {
@@ -393,6 +401,14 @@ export type Database = {
           protein_g?: number;
           carbs_g?: number;
           fat_g?: number;
+          food_id?: string | null;
+          image_url?: string | null;
+          quantity?: number | null;
+          unit?: string | null;
+          fiber_g?: number;
+          sugar_g?: number;
+          sodium_mg?: number;
+          source?: "search" | "barcode" | "ai" | "manual";
           created_at?: string;
         };
         Update: {
@@ -402,6 +418,14 @@ export type Database = {
           protein_g?: number;
           carbs_g?: number;
           fat_g?: number;
+          food_id?: string | null;
+          image_url?: string | null;
+          quantity?: number | null;
+          unit?: string | null;
+          fiber_g?: number;
+          sugar_g?: number;
+          sodium_mg?: number;
+          source?: "search" | "barcode" | "ai" | "manual";
           logged_date?: string;
         };
         Relationships: [];
