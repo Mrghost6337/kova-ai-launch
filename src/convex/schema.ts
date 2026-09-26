@@ -51,6 +51,14 @@ const schema = defineSchema(
     waitlist: defineTable({
       email: v.string(),
     }).index("by_email", ["email"]),
+
+    // Cache of food-database lookups (Open Food Facts / USDA FoodData Central)
+    // for the Food page. One row per normalized query or barcode.
+    foodCache: defineTable({
+      key: v.string(),
+      payload: v.any(),
+      createdAt: v.number(),
+    }).index("by_key", ["key"]),
   },
   {
     schemaValidation: false,

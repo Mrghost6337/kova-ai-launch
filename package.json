@@ -56,6 +56,7 @@
     "framer-motion": "^12.23.25",
     "hono": "^4.10.7",
     "input-otp": "^1.4.2",
+    "liquid-glass-web-react": "^0.1.1",
     "lucide-react": "^0.555.0",
     "maplibre-gl": "^6.9.0",
     "ms": "^2.1.3",

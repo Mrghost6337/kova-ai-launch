@@ -3,59 +3,85 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action } from "./_generated/server";
+import { FOOD101_DISHES } from "./food101Dishes";
+import { matchFoodByName } from "./foodProviders";
 
 /**
- * AI food scanner (mobile Food page).
+ * AI food scanner for the KOVA Food page ("Scan with AI").
  *
- * The user's food photo is sent to a vision model through OpenRouter. The API
- * key is read from Convex environment variables (OPENROUTER_API_KEY) and never
- * reaches the browser. The model must answer in strict JSON so the client can
- * render editable results before anything is saved — nothing is stored here.
+ * Pipeline:
+ *   1. Photo → open-weights vision model (default Qwen2.5-VL via OpenRouter,
+ *      configurable with FOOD_VISION_MODEL) identifies foods and estimates
+ *      portions. The model is used for RECOGNITION ONLY — it never outputs
+ *      nutrition numbers.
+ *   2. Each detected food is matched against Open Food Facts (primary) and
+ *      USDA FoodData Central (requires USDA_API_KEY).
+ *   3. Nutrition is computed from the matched database values scaled by the
+ *      estimated grams. Items with no database match are returned with
+ *      matched: false and zero values — the user edits them manually or
+ *      removes them. Nothing is invented here; nothing is stored.
+ *
+ * FoodLMM (https://github.com/YuehaoYin/FoodLMM) was evaluated as the primary
+ * recognizer but requires a CUDA GPU (LISA-7B + SAM ViT-H, flash-attn,
+ * deepspeed) and ships no hosted inference API or license file, so it cannot
+ * run on this infrastructure. Per the project rule the integration is not
+ * faked: the same interface is fulfilled by an open-weights vision model
+ * served through OpenRouter (Qwen2.5-VL by default, Apache-2.0 weights).
+ *
+ * Food-101 is used as a dish-name vocabulary (reference only) to steer the
+ * recognizer toward consistent dish names.
  */
 
-const MODEL = "google/gemini-2.0-flash-001";
+const DEFAULT_VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct";
 
-const SYSTEM_PROMPT = `You are a nutrition analysis engine inside a fitness app. You receive one photo of a meal and estimate its contents.
+const DISH_VOCABULARY = FOOD101_DISHES.join(", ");
+
+const SYSTEM_PROMPT = `You are a food recognition engine inside a fitness app. You receive one photo of a meal.
+
+Your job is ONLY to identify the foods and estimate portion sizes. You do NOT provide nutrition values — the app looks those up in real food databases (Open Food Facts / USDA).
 
 Rules:
-- Identify each distinct food item. Estimate the portion in grams from visual cues (plate size, cutlery, packaging).
-- Estimate calories, protein, carbohydrates and fat per item using standard nutrition data. Use plausible values for typical preparations; never invent brand names you cannot see.
-- If the photo contains no food, is not readable, or you cannot identify anything, return items: [] and set note to a short reason.
-- Confidence (0-1) reflects how sure you are about the identification and portion.
-- Answer with JSON only, matching the requested schema exactly. No markdown, no extra text.`;
+- List each distinct food item you can see.
+- For each item, estimate the portion in grams from visual cues (plate size, cutlery, packaging). For drinks, give the amount in ml as the grams value.
+- Use short, generic food names a food database would know (e.g. "chicken breast", "white rice", "greek yogurt", "fried rice", "caesar salad").
+- When the photo shows a prepared dish, prefer these common dish names where they match: ${DISH_VOCABULARY}.
+- If you cannot tell what something is, still list it with your best generic name and a low confidence.
+- If the photo contains no food or is unreadable, return items: [] and set note to a short reason.
+- Never output calories or macronutrients.
+- Answer with JSON only, exactly: {"items": [{"name": string, "grams": number, "confidence": number}], "note": string}`;
 
-const userPrompt = "Analyze this meal photo. Return the detected food items with estimated grams, kcal, protein, carbs and fat for each.";
+type DetectedItem = { name: string; grams: number; confidence: number };
 
-type DetectedItem = {
+type DetectedFoodItem = {
   name: string;
   grams: number;
   calories: number;
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  fiber_g: number;
+  sugar_g: number;
+  sodium_mg: number;
   confidence: number;
+  matched: boolean;
+  imageUrl: string | null;
 };
 
-type AnalysisResult = { items: DetectedItem[]; note: string };
+type AnalysisResult = { items: DetectedFoodItem[]; note: string };
 
 function clampItem(raw: unknown): DetectedItem | null {
   if (typeof raw !== "object" || raw === null) return null;
   const item = raw as Record<string, unknown>;
   const name = typeof item.name === "string" ? item.name.trim().slice(0, 80) : "";
   if (!name) return null;
-  const num = (value: unknown, max: number) => Math.max(0, Math.min(max, Math.round(Number(value) || 0)));
   return {
     name,
-    grams: num(item.grams, 5000),
-    calories: num(item.calories, 5000),
-    protein_g: num(item.protein_g ?? item.protein, 500),
-    carbs_g: num(item.carbs_g ?? item.carbs, 800),
-    fat_g: num(item.fat_g ?? item.fat, 300),
+    grams: Math.max(0, Math.min(5000, Math.round(Number(item.grams) || 0))),
     confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0.5)),
   };
 }
 
-function parseAnalysis(content: string): AnalysisResult {
+function parseAnalysis(content: string): { items: DetectedItem[]; note: string } {
   // Tolerate models that wrap JSON in code fences.
   const cleaned = content.replace(/```json|```/g, "").trim();
   const start = cleaned.indexOf("{");
@@ -72,9 +98,29 @@ export const analyzeMeal = action({
     mimeType: v.string(), // e.g. image/jpeg
     mealHint: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("You need to be signed in to scan food.");
+  returns: v.object({
+    items: v.array(
+      v.object({
+        name: v.string(),
+        grams: v.number(),
+        calories: v.number(),
+        protein_g: v.number(),
+        carbs_g: v.number(),
+        fat_g: v.number(),
+        fiber_g: v.number(),
+        sugar_g: v.number(),
+        sodium_mg: v.number(),
+        confidence: v.number(),
+        matched: v.boolean(),
+        imageUrl: v.union(v.string(), v.null()),
+      }),
+    ),
+    note: v.string(),
+  }),
+  handler: async (ctx, args): Promise<AnalysisResult> => {
+    await getAuthUserId(ctx).then((userId) => {
+      if (!userId) throw new Error("You need to be signed in to scan food.");
+    });
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -87,8 +133,11 @@ export const analyzeMeal = action({
       throw new Error("That image is too large. Try a smaller photo.");
     }
 
+    const model = process.env.FOOD_VISION_MODEL || DEFAULT_VISION_MODEL;
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45_000);
+    let recognized: { items: DetectedItem[]; note: string };
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -100,19 +149,19 @@ export const analyzeMeal = action({
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: MODEL,
+          model,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             {
               role: "user",
               content: [
-                { type: "text", text: args.mealHint ? `${userPrompt} The user says this is for: ${args.mealHint}.` : userPrompt },
+                { type: "text", text: args.mealHint ? `Identify the foods in this photo. The user says this is for: ${args.mealHint}.` : "Identify the foods in this photo and estimate each portion." },
                 { type: "image_url", image_url: { url: `data:${args.mimeType};base64,${args.imageBase64}` } },
               ],
             },
           ],
           response_format: { type: "json_object" },
-          max_tokens: 1200,
+          max_tokens: 900,
           temperature: 0.2,
         }),
       });
@@ -129,12 +178,7 @@ export const analyzeMeal = action({
       };
       const content = payload.choices?.[0]?.message?.content;
       if (!content) throw new Error("The AI returned an empty response. Try again.");
-
-      const result = parseAnalysis(content);
-      if (!result.items.length) {
-        throw new Error(result.note || "KOVA could not detect any food in this photo. Try a clearer, well-lit photo of the meal.");
-      }
-      return result;
+      recognized = parseAnalysis(content);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error("The analysis timed out. Check your connection and try again.");
@@ -143,5 +187,44 @@ export const analyzeMeal = action({
     } finally {
       clearTimeout(timeout);
     }
+
+    if (!recognized.items.length) {
+      throw new Error(recognized.note || "KOVA could not detect any food in this photo. Try a clearer, well-lit photo of the meal.");
+    }
+
+    // Match every recognized food against the real nutrition databases.
+    const usdaApiKey = process.env.USDA_API_KEY;
+    const items: DetectedFoodItem[] = await Promise.all(
+      recognized.items.map(async (item): Promise<DetectedFoodItem> => {
+        const food = await matchFoodByName(item.name, usdaApiKey).catch(() => null);
+        if (!food) {
+          // No database match: return zeros and let the user edit or remove.
+          return { name: item.name, grams: item.grams, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0, confidence: item.confidence, matched: false, imageUrl: null };
+        }
+        const factor = Math.max(0, item.grams) / 100;
+        const r = (value: number) => Math.round(value * factor);
+        return {
+          name: item.name,
+          grams: item.grams,
+          calories: r(food.per100.kcal),
+          protein_g: r(food.per100.protein),
+          carbs_g: r(food.per100.carbs),
+          fat_g: r(food.per100.fat),
+          fiber_g: r(food.per100.fiber),
+          sugar_g: r(food.per100.sugar),
+          sodium_mg: r(food.per100.sodium),
+          confidence: item.confidence,
+          matched: true,
+          imageUrl: food.imageUrl,
+        };
+      }),
+    );
+
+    const matchedCount = items.filter((item) => item.matched).length;
+    const note = matchedCount < items.length
+      ? `${matchedCount} of ${items.length} foods matched a nutrition database. Items without a match need manual values.`
+      : recognized.note;
+
+    return { items, note };
   },
 });

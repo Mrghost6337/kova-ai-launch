@@ -18,17 +18,16 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAction } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { useFoodHistory } from "@/hooks/use-nutrition";
 import {
   formatServing,
   loadFavoriteFoods,
   loadRecentFoods,
-  lookupBarcode,
-  popularFoods,
   rememberFood,
   removeRecentFood,
   scaleResult,
-  searchFoods,
   toggleFavoriteFood,
   type FoodSearchResult,
   type RecentFood,
@@ -65,6 +64,35 @@ const MEALS: Array<{ key: Meal; label: string; icon: typeof Apple }> = [
 const ease = [0.22, 1, 0.36, 1] as const;
 
 type Mode = "search" | "portion" | "barcode" | "manual";
+
+/** Map a backend result (off:/usda: id) onto the client result shape. */
+function toClientResult(item: {
+  id: string;
+  source: string;
+  name: string;
+  brand: string | null;
+  imageUrl: string | null;
+  servingGrams: number | null;
+  unit: "g" | "ml";
+  per100: { kcal: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number; sodium: number };
+}): FoodSearchResult {
+  return {
+    id: item.id,
+    name: item.name,
+    brand: item.brand,
+    displayName: item.name,
+    kcalPer100: item.per100.kcal,
+    proteinPer100: item.per100.protein,
+    carbsPer100: item.per100.carbs,
+    fatPer100: item.per100.fat,
+    fiberPer100: item.per100.fiber,
+    sugarPer100: item.per100.sugar,
+    sodiumPer100: item.per100.sodium,
+    servingGrams: item.servingGrams,
+    unit: item.unit,
+    imageUrl: item.imageUrl,
+  };
+}
 
 function MacroPill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -133,6 +161,9 @@ export function FoodPicker({
 }) {
   const { user } = useSupabaseAuth();
   const frequent = useFoodHistory(user?.id, 8);
+  const searchFoodsAction = useAction(api.foodData.searchFoods);
+  const lookupBarcodeAction = useAction(api.foodData.lookupBarcode);
+  const popularFoodsAction = useAction(api.foodData.popularFoods);
 
   const [mode, setMode] = useState<Mode>("search");
   const [query, setQuery] = useState("");
@@ -175,7 +206,9 @@ export function FoodPicker({
     setRecents(loadRecentFoods());
     setFavorites(loadFavoriteFoods());
     if (!popular.length) {
-      void popularFoods().then(setPopular).catch(() => setPopular([]));
+      void popularFoodsAction()
+        .then((items) => setPopular(items.map(toClientResult)))
+        .catch(() => setPopular([]));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -193,9 +226,9 @@ export function FoodPicker({
     setSearching(true);
     const timer = window.setTimeout(async () => {
       try {
-        const found = await searchFoods(trimmed);
+        const found = await searchFoodsAction({ query: trimmed });
         if (token !== searchToken.current) return;
-        setResults(found);
+        setResults(found.map(toClientResult));
         setSearchError(found.length ? null : "Nothing found — try another name (e.g. 'chicken', 'banana', 'rice').");
       } catch (cause) {
         if (token !== searchToken.current) return;
@@ -271,12 +304,12 @@ export function FoodPicker({
     setBarcodeBusy(true);
     setBarcodeError(null);
     try {
-      const food = await lookupBarcode(barcode);
-      if (!food) {
+      const found = await lookupBarcodeAction({ barcode });
+      if (!found) {
         setBarcodeError("No product found for this barcode.");
         return;
       }
-      chooseFood(food);
+      chooseFood(toClientResult(found));
       setBarcode("");
     } catch (cause) {
       setBarcodeError(cause instanceof Error ? cause.message : "Barcode lookup failed.");

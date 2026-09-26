@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Camera, Check, ImageIcon, Loader2, Plus, ScanLine, Trash2, X } from "lucide-react";
+import { Camera, Check, ImageIcon, Loader2, Plus, ScanLine, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { CameraCapture } from "@/components/food/CameraCapture";
+import { DetectedFoodRow } from "@/components/food/DetectedFoodRow";
 import { useFoodAi, type DetectedFood } from "@/hooks/use-food-ai";
 import { cn } from "@/lib/utils";
 
@@ -14,80 +16,9 @@ const MEAL_OPTIONS: Array<{ key: Meal; label: string }> = [
   { key: "snack", label: "Snacks" },
 ];
 
+const ease = [0.22, 1, 0.36, 1] as const;
+
 type Stage = "capture" | "preview" | "result";
-
-function FoodRow({
-  item,
-  index,
-  onChange,
-  onRemove,
-}: {
-  item: DetectedFood;
-  index: number;
-  onChange: (next: DetectedFood) => void;
-  onRemove: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05 * index }}
-      className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <button type="button" onClick={() => setOpen((value) => !value)} className="min-w-0 flex-1 text-left">
-          <p className="truncate text-sm font-medium text-white/90">{item.name}</p>
-          <p className="mt-1 text-xs text-white/40">
-            {item.grams ? `${item.grams} g · ` : ""}{item.calories} kcal
-          </p>
-        </button>
-        <div className="flex items-center gap-1.5">
-          <span className="rounded-full bg-white/[0.07] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-white/50">
-            {Math.round(item.confidence * 100)}%
-          </span>
-          <button type="button" onClick={onRemove} className="flex size-8 items-center justify-center rounded-full text-white/30 hover:bg-red-300/10 hover:text-red-200" aria-label={`Remove ${item.name}`}>
-            <Trash2 className="size-3.5" />
-          </button>
-        </div>
-      </div>
-      <p className="mt-1.5 text-[11px] text-white/45">P {item.protein_g}g · C {item.carbs_g}g · F {item.fat_g}g</p>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/[0.08] pt-3">
-              <label className="block">
-                <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/30">Food</span>
-                <input value={item.name} onChange={(event) => onChange({ ...item, name: event.target.value })} className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-white/30" />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/30">Quantity (g)</span>
-                <input type="number" min={0} value={item.grams || ""} onChange={(event) => onChange({ ...item, grams: Math.max(0, Number(event.target.value) || 0) })} className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-white/30" />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/30">kcal</span>
-                <input type="number" min={0} value={item.calories || ""} onChange={(event) => onChange({ ...item, calories: Math.max(0, Number(event.target.value) || 0) })} className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-white/30" />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/30">Protein (g)</span>
-                <input type="number" min={0} value={item.protein_g || ""} onChange={(event) => onChange({ ...item, protein_g: Math.max(0, Number(event.target.value) || 0) })} className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-white/30" />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/30">Carbs (g)</span>
-                <input type="number" min={0} value={item.carbs_g || ""} onChange={(event) => onChange({ ...item, carbs_g: Math.max(0, Number(event.target.value) || 0) })} className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-white/30" />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/30">Fat (g)</span>
-                <input type="number" min={0} value={item.fat_g || ""} onChange={(event) => onChange({ ...item, fat_g: Math.max(0, Number(event.target.value) || 0) })} className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-white/30" />
-              </label>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
 
 export function FoodScanDialog({
   open,
@@ -102,7 +33,7 @@ export function FoodScanDialog({
   meal: Meal;
   onMealChange: (meal: Meal) => void;
   onSaved: () => void;
-  onAdd: (entry: { meal: Meal; name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number }) => Promise<void>;
+  onAdd: (entry: { meal: Meal; name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; fiber_g?: number; sugar_g?: number; sodium_mg?: number; source?: "search" | "barcode" | "ai" | "manual" }) => Promise<void>;
 }) {
   const { analyzeMeal, isAnalyzing } = useFoodAi();
   const [stage, setStage] = useState<Stage>("capture");
@@ -113,8 +44,7 @@ export function FoodScanDialog({
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const busyRef = useRef(false);
 
   const reset = () => {
     setStage("capture");
@@ -130,12 +60,7 @@ export function FoodScanDialog({
     window.setTimeout(reset, 250);
   };
 
-  const handleFile = (next: File | undefined) => {
-    if (!next) return;
-    if (!next.type.startsWith("image/")) {
-      setError("That file is not an image. Choose a photo of your meal.");
-      return;
-    }
+  const handleFile = (next: File) => {
     if (next.size > 8_000_000) {
       setError("That photo is too large (max 8 MB). Try another one.");
       return;
@@ -147,7 +72,8 @@ export function FoodScanDialog({
   };
 
   const analyze = async () => {
-    if (!file) return;
+    if (!file || busyRef.current) return;
+    busyRef.current = true;
     setError(null);
     try {
       const result = await analyzeMeal(file, MEAL_OPTIONS.find((option) => option.key === selectedMeal)?.label);
@@ -156,6 +82,8 @@ export function FoodScanDialog({
       setStage("result");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not analyze this photo.");
+    } finally {
+      busyRef.current = false;
     }
   };
 
@@ -177,10 +105,10 @@ export function FoodScanDialog({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 backdrop-blur-2xl sm:items-center sm:px-4 sm:py-10"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-2xl"
           role="dialog"
           aria-modal="true"
-          aria-label="Scan food"
+          aria-label="Scan food with AI"
           onClick={(event) => {
             if (event.target === event.currentTarget) close();
           }}
@@ -189,16 +117,16 @@ export function FoodScanDialog({
             initial={{ opacity: 0, y: 30, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="liquid-glass flex max-h-[92dvh] w-full flex-col rounded-t-[2rem] border-white/15 bg-[var(--surface-solid)] sm:max-w-lg sm:rounded-[2rem]"
+            transition={{ duration: 0.4, ease }}
+            className="liquid-glass flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-[2rem] border-white/15 bg-[var(--surface-solid)]"
           >
-            <div className="shrink-0 px-5 pb-3 pt-4 sm:px-6">
-              <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-white/20 sm:hidden" />
+            {/* Header */}
+            <div className="shrink-0 px-6 pb-3 pt-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <ScanLine className="size-5 text-kova-amber" />
                   <h2 className="font-serif text-2xl italic tracking-[-0.03em]">
-                    {stage === "result" ? "Here's what KOVA found" : "Scan with AI"}
+                    {stage === "result" ? "AI estimate" : stage === "preview" ? "Review photo" : "Scan with AI"}
                   </h2>
                 </div>
                 <button type="button" onClick={close} className="flex size-9 items-center justify-center rounded-full bg-white/[0.06] text-white/50 hover:text-white" aria-label="Close scanner">
@@ -225,34 +153,26 @@ export function FoodScanDialog({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[max(env(safe-area-inset-bottom),18px)] pt-3 sm:px-6">
+            {/* Body */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-3">
               {stage === "capture" && (
-                <div className="pb-4">
-                  <p className="text-sm leading-6 text-white/45">Take a photo of your meal — KOVA identifies the foods and estimates calories and macros. You review everything before it is saved.</p>
-                  <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(event) => handleFile(event.target.files?.[0])} />
-                  <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => handleFile(event.target.files?.[0])} />
-                  <button type="button" onClick={() => cameraInputRef.current?.click()} className="mt-5 flex h-32 w-full flex-col items-center justify-center gap-2.5 rounded-[1.5rem] border border-white/12 bg-white/[0.035] transition-colors hover:bg-white/[0.06]">
-                    <Camera className="size-6 text-white/70" />
-                    <span className="text-sm font-medium text-white/85">Open camera</span>
-                    <span className="text-[11px] text-white/35">Take a photo of your plate</span>
-                  </button>
-                  <button type="button" onClick={() => galleryInputRef.current?.click()} className="mt-2.5 flex h-14 w-full items-center justify-center gap-2.5 rounded-[1.5rem] border border-white/10 bg-white/[0.02] transition-colors hover:bg-white/[0.05]">
-                    <ImageIcon className="size-4 text-white/55" />
-                    <span className="text-sm text-white/70">Choose from gallery</span>
-                  </button>
+                <>
+                  <div className="h-[340px]">
+                    <CameraCapture active={open} onCaptured={handleFile} compact />
+                  </div>
                   {error && <p className="mt-4 rounded-2xl border border-red-300/20 bg-red-300/5 p-3.5 text-sm leading-5 text-red-200">{error}</p>}
-                </div>
+                </>
               )}
 
               {stage === "preview" && previewUrl && (
-                <div className="pb-4">
+                <div>
                   <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10">
-                    <img src={previewUrl} alt="Your meal" className="max-h-72 w-full object-cover" />
+                    <img src={previewUrl} alt="Your meal" className="max-h-80 w-full object-cover" />
                     {isAnalyzing && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 backdrop-blur-sm">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/65 backdrop-blur-sm">
                         <Loader2 className="size-7 animate-spin text-white" />
                         <p className="text-sm font-medium text-white/90">Analyzing your meal…</p>
-                        <p className="text-[11px] text-white/50">This usually takes a few seconds</p>
+                        <p className="text-[11px] text-white/55">Matching against food databases — a few seconds</p>
                       </div>
                     )}
                   </div>
@@ -269,10 +189,10 @@ export function FoodScanDialog({
               )}
 
               {stage === "result" && (
-                <div className="pb-4">
+                <div>
                   <div className="space-y-2.5">
                     {items.map((item, index) => (
-                      <FoodRow
+                      <DetectedFoodRow
                         key={`${item.name}-${index}`}
                         item={item}
                         index={index}
@@ -281,7 +201,7 @@ export function FoodScanDialog({
                       />
                     ))}
                   </div>
-                  <button type="button" onClick={() => setItems((current) => [...current, { name: "", grams: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, confidence: 1 }])} className="mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-xs text-white/45 hover:border-white/30 hover:text-white/70">
+                  <button type="button" onClick={() => setItems((current) => [...current, { name: "", grams: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0, confidence: 1, matched: false, imageUrl: null }])} className="mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-xs text-white/45 hover:border-white/30 hover:text-white/70">
                     <Plus className="size-3.5" />Add another food
                   </button>
 
@@ -289,7 +209,7 @@ export function FoodScanDialog({
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-kova-amber">AI estimate</p>
                     <p className="mt-1.5 text-2xl font-semibold text-white">{totals.calories.toLocaleString()} kcal</p>
                     <p className="mt-1 text-xs text-white/55">{totals.protein}g protein · {totals.carbs}g carbs · {totals.fat}g fat</p>
-                    <p className="mt-2 text-[11px] leading-4 text-white/40">These values are estimates based on the image. Review the detected foods and portions before adding them.</p>
+                    <p className="mt-2 text-[11px] leading-4 text-white/40">Nutrition values come from Open Food Facts / USDA based on the detected foods and portions. Review everything before adding.</p>
                     {note && <p className="mt-1.5 text-[11px] leading-4 text-white/40">{note}</p>}
                   </div>
 
@@ -300,7 +220,8 @@ export function FoodScanDialog({
                     <button
                       type="button"
                       onClick={() => {
-                        if (!items.length) return;
+                        if (!items.length || busyRef.current) return;
+                        busyRef.current = true;
                         setSaving(true);
                         setError(null);
                         void (async () => {
@@ -313,6 +234,10 @@ export function FoodScanDialog({
                                 protein_g: item.protein_g,
                                 carbs_g: item.carbs_g,
                                 fat_g: item.fat_g,
+                                fiber_g: item.fiber_g,
+                                sugar_g: item.sugar_g,
+                                sodium_mg: item.sodium_mg,
+                                source: "ai",
                               });
                             }
                             toast(`${items.length} item${items.length === 1 ? "" : "s"} added to ${MEAL_OPTIONS.find((option) => option.key === selectedMeal)?.label.toLowerCase()}.`);
@@ -322,6 +247,7 @@ export function FoodScanDialog({
                             setError(cause instanceof Error ? cause.message : "Could not save these items.");
                           } finally {
                             setSaving(false);
+                            busyRef.current = false;
                           }
                         })();
                       }}
@@ -335,6 +261,20 @@ export function FoodScanDialog({
                 </div>
               )}
             </div>
+
+            {/* Hint under the camera */}
+            {stage === "capture" && (
+              <div className="shrink-0 border-t border-white/[0.08] px-6 py-3.5">
+                <p className="flex items-center gap-2 text-[11px] leading-4 text-white/35">
+                  <Camera className="size-3.5 shrink-0" />
+                  Take a photo of your plate — KOVA identifies the foods, then pulls nutrition from real databases.
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-white/35">
+                  <ImageIcon className="size-3.5 shrink-0" />
+                  Gallery picking is available inside the camera view.
+                </span>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

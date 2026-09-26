@@ -279,23 +279,16 @@ input:focus-visible {
     0 2px 10px var(--glass-shadow);
 }
 
-/* Circular "orb" indicator behind the active tab. One shared element that
-   springs from tab to tab via framer-motion layoutId. */
-.mobile-nav-orb {
-  border-radius: 9999px;
-  background: radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.07) 58%, transparent 78%);
-  box-shadow:
-    inset 0 1px 1px var(--glass-inset),
-    0 0 0 1px var(--glass-border),
-    0 0 22px rgba(240, 180, 41, 0.35);
+/* Amber glow that travels with the active tab, underneath the refraction
+   lens rendered by liquid-glass-web-react. */
+.mobile-nav-glow {
+  background: radial-gradient(circle, rgba(240, 180, 41, 0.4), rgba(240, 180, 41, 0.1) 45%, transparent 70%);
+  mix-blend-mode: screen;
 }
 
-.light .mobile-nav-orb {
-  background: radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.95), rgba(15, 15, 19, 0.06) 60%, transparent 78%);
-  box-shadow:
-    0 6px 18px rgba(18, 18, 22, 0.16),
-    0 0 0 1px rgba(12, 12, 15, 0.1),
-    0 0 16px rgba(180, 83, 9, 0.18);
+.light .mobile-nav-glow {
+  background: radial-gradient(circle, rgba(180, 83, 9, 0.28), rgba(180, 83, 9, 0.07) 45%, transparent 70%);
+  mix-blend-mode: multiply;
 }
 
 .section-shell {
