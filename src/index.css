@@ -1092,11 +1092,32 @@ input:focus-visible {
   position: absolute;
   inset: 0;
   border-radius: 0.95rem;
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 8px 20px -12px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.light .nav-rail-pill {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+  border-color: rgba(12, 12, 15, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 3px rgba(18, 18, 22, 0.08);
+}
+
+.light .nav-rail-link {
+  color: rgba(12, 12, 15, 0.44);
+}
+
+.light .nav-rail-link:hover {
+  color: rgba(12, 12, 15, 0.85);
+}
+
+.light .nav-rail-link--active,
+.light .nav-rail-link[data-active="true"] {
+  color: #0c0c0f;
 }
 
 /* ——— Skeletons ——————————————————————————————————————————————————————— */
@@ -1259,7 +1280,7 @@ input[type="range"].glass-range::-moz-range-thumb {
   height: 44vw;
   min-width: 340px;
   min-height: 340px;
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.16), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.07), transparent 70%);
   animation: orb-drift 26s ease-in-out infinite alternate;
 }
 
@@ -1270,7 +1291,7 @@ input[type="range"].glass-range::-moz-range-thumb {
   height: 52vw;
   min-width: 400px;
   min-height: 400px;
-  background: radial-gradient(circle, rgba(167, 139, 250, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 70%);
   animation: orb-drift 34s ease-in-out infinite alternate-reverse;
 }
 
@@ -1281,7 +1302,7 @@ input[type="range"].glass-range::-moz-range-thumb {
   height: 30vw;
   min-width: 260px;
   min-height: 260px;
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.09), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04), transparent 70%);
   animation: orb-drift 30s ease-in-out infinite alternate;
 }
 
@@ -1290,15 +1311,15 @@ input[type="range"].glass-range::-moz-range-thumb {
 }
 
 .light .ambient-orb--a {
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.14), transparent 70%);
+  background: radial-gradient(circle, rgba(12, 12, 15, 0.07), transparent 70%);
 }
 
 .light .ambient-orb--b {
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.1), transparent 70%);
+  background: radial-gradient(circle, rgba(12, 12, 15, 0.05), transparent 70%);
 }
 
 .light .ambient-orb--c {
-  background: radial-gradient(circle, rgba(13, 148, 136, 0.09), transparent 70%);
+  background: radial-gradient(circle, rgba(12, 12, 15, 0.04), transparent 70%);
 }
 
 @keyframes orb-drift {
@@ -1324,7 +1345,7 @@ input[type="range"].glass-range::-moz-range-thumb {
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     inset 0 -40px 80px rgba(0, 0, 0, 0.3),
     0 70px 140px -40px rgba(0, 0, 0, 0.85),
-    0 0 90px -30px rgba(96, 165, 250, 0.14);
+    0 0 90px -30px rgba(255, 255, 255, 0.07);
 }
 
 /* Refracted ambient light on the panel surface. */
@@ -1334,8 +1355,8 @@ input[type="range"].glass-range::-moz-range-thumb {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(42% 30% at 82% -4%, rgba(167, 139, 250, 0.1), transparent 70%),
-    radial-gradient(36% 26% at 6% 8%, rgba(96, 165, 250, 0.08), transparent 70%);
+    radial-gradient(42% 30% at 82% -4%, rgba(255, 255, 255, 0.06), transparent 70%),
+    radial-gradient(36% 26% at 6% 8%, rgba(255, 255, 255, 0.045), transparent 70%);
 }
 
 /* Thin bright top edge — light catches the glass. */
@@ -1376,8 +1397,8 @@ input[type="range"].glass-range::-moz-range-thumb {
   inset: 0;
   border-radius: inherit;
   width: calc(var(--fill, 0) * 1%);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55), rgba(147, 197, 253, 0.85), rgba(196, 181, 253, 0.85));
-  box-shadow: 0 0 12px rgba(147, 197, 253, 0.35);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.95));
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
   transition: width 0.6s var(--ease-app);
 }
 
@@ -1386,7 +1407,7 @@ input[type="range"].glass-range::-moz-range-thumb {
 }
 
 .light .onboarding-progress::before {
-  background: linear-gradient(90deg, rgba(12, 12, 15, 0.5), rgba(37, 99, 235, 0.65), rgba(124, 58, 237, 0.65));
+  background: linear-gradient(90deg, rgba(12, 12, 15, 0.45), rgba(12, 12, 15, 0.85));
   box-shadow: none;
 }
 
@@ -1413,11 +1434,11 @@ input[type="range"].glass-range::-moz-range-thumb {
 }
 
 .onboarding-selectable[data-selected="true"] {
-  background: linear-gradient(165deg, rgba(96, 165, 250, 0.12), rgba(167, 139, 250, 0.08));
-  border-color: rgba(147, 197, 253, 0.4);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.06));
+  border-color: rgba(255, 255, 255, 0.4);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 34px -10px rgba(96, 165, 250, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 34px -12px rgba(255, 255, 255, 0.3);
 }
 
 .light .onboarding-selectable {
@@ -1426,9 +1447,9 @@ input[type="range"].glass-range::-moz-range-thumb {
 }
 
 .light .onboarding-selectable[data-selected="true"] {
-  background: linear-gradient(165deg, rgba(59, 130, 246, 0.08), rgba(124, 58, 237, 0.06));
-  border-color: rgba(37, 99, 235, 0.35);
-  box-shadow: 0 0 28px -12px rgba(37, 99, 235, 0.3);
+  background: linear-gradient(165deg, rgba(12, 12, 15, 0.06), rgba(12, 12, 15, 0.03));
+  border-color: rgba(12, 12, 15, 0.45);
+  box-shadow: 0 0 28px -14px rgba(12, 12, 15, 0.35);
 }
 
 /* Large tactile glass fields (name input, discovery other). */

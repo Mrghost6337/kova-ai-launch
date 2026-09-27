@@ -23,6 +23,7 @@ import { formatDistance, haversineKm } from "@/lib/geo";
 import { gymStatus } from "@/lib/opening-hours";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { useCompletedSets, useKovaPlanDays, useKovaPlans, useKovaProfile } from "@/hooks/use-kova-app";
+import { todayKey, useFoodEntries, useNutritionTargets } from "@/hooks/use-nutrition";
 
 /* ————————————————————————————————————————————————————————————————————————
    Home — the KOVA command center. Real data only: today's scheduled workout,
@@ -43,6 +44,13 @@ function initials(name: string) {
       .toUpperCase() || "K"
   );
 }
+
+/** Shared entrance for widgets: quiet fade + rise on the app ease curve. */
+const rise = (delay: number) => ({
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+});
 
 function QuickAction({
   to,
@@ -118,6 +126,25 @@ export default function AppDashboard() {
   const maxDaySets = Math.max(1, ...weeklySets.map((bucket) => bucket.count));
 
   const { friends, isLoading: friendsLoading } = useFriends(user?.id);
+
+  // Real nutrition state for today — only shown when the athlete has targets.
+  const { targets, isLoading: targetsLoading } = useNutritionTargets(user?.id);
+  const { entries, isLoading: entriesLoading } = useFoodEntries(user?.id, todayKey(today));
+  const nutritionTotals = useMemo(() => {
+    return entries.reduce(
+      (totals, entry) => ({
+        calories: totals.calories + entry.calories,
+        protein: totals.protein + entry.protein_g,
+      }),
+      { calories: 0, protein: 0 },
+    );
+  }, [entries]);
+  const caloriePct = targets?.calorie_target
+    ? Math.min(100, (nutritionTotals.calories / targets.calorie_target) * 100)
+    : 0;
+  const proteinPct = targets?.protein_target
+    ? Math.min(100, (nutritionTotals.protein / targets.protein_target) * 100)
+    : 0;
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60_000);
@@ -222,6 +249,11 @@ export default function AppDashboard() {
                         <CalendarDays className="size-3.5" />
                         {activePlan.name}
                       </span>
+                      {profile?.fitness_goal ? (
+                        <span className="glass-chip h-7 px-3 text-[11px] text-white/65">
+                          {profile.fitness_goal.replace(/_/g, " ")}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-8 flex flex-wrap gap-3">
                       <GlassButton variant="solid" size="lg" onClick={() => navigate(`/dashboard/plan/${activePlan.id}`)}>
@@ -230,6 +262,9 @@ export default function AppDashboard() {
                       </GlassButton>
                       <GlassButton variant="ghost" size="lg" onClick={() => navigate("/dashboard/progress")}>
                         View progress
+                      </GlassButton>
+                      <GlassButton variant="primary" size="lg" onClick={() => navigate("/dashboard/plan")}>
+                        Plan
                       </GlassButton>
                     </div>
                   </div>
@@ -249,7 +284,7 @@ export default function AppDashboard() {
                                 transition={{ delay: 0.3 + index * 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                                 className={`w-full rounded-lg ${
                                   isToday && bucket.count
-                                    ? "bg-[var(--accent-sky)] shadow-[0_0_18px_-4px_var(--accent-sky)]"
+                                    ? "bg-white shadow-[0_0_18px_-6px_rgba(255,255,255,0.5)]"
                                     : isToday
                                       ? "bg-white/85"
                                       : bucket.count
@@ -288,13 +323,9 @@ export default function AppDashboard() {
               <QuickAction to="/dashboard/progress" icon={Flame} label="View progress" />
             </motion.div>
 
-            {/* Secondary grid */}
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.16, duration: 0.45 }}
-              >
+            {/* Secondary grid — training, fuel, consistency, friends. */}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <motion.div {...rise(0.16)}>
                 <GlassCard interactive className="h-full p-6">
                   <SectionHeader icon={CalendarDays} label="Next session" />
                   <p className="t-h2 mt-6 truncate">{nextWorkout?.title ?? "Nothing planned"}</p>
@@ -314,11 +345,45 @@ export default function AppDashboard() {
                 </GlassCard>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.45 }}
-              >
+              <motion.div {...rise(0.2)}>
+                <GlassCard interactive className="h-full p-6">
+                  <SectionHeader icon={Utensils} label="Nutrition today" />
+                  {targetsLoading || entriesLoading ? (
+                    <div className="mt-6 space-y-2">
+                      <div className="skeleton h-10 w-24" />
+                      <div className="skeleton h-3 w-3/4" />
+                    </div>
+                  ) : !targets ? (
+                    <>
+                      <p className="t-h2 mt-6">No nutrition targets</p>
+                      <p className="t-caption mt-2 leading-6">
+                        Set your targets on the Food page and today's fuel shows up here.
+                      </p>
+                      <Link
+                        to="/dashboard/food"
+                        className="t-caption mt-5 inline-flex items-center gap-1 text-white/55 hover:text-white"
+                      >
+                        Set targets <ChevronRight className="size-3" />
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className="t-metric mt-6 text-4xl">
+                        {nutritionTotals.calories.toLocaleString()}
+                        <span className="t-caption ml-2 text-base text-white/35">
+                          / {targets.calorie_target.toLocaleString()} kcal
+                        </span>
+                      </p>
+                      <GlassProgress className="mt-5" value={caloriePct} />
+                      <p className="t-caption mt-2.5">
+                        {Math.round(nutritionTotals.protein)} g protein · {Math.round(proteinPct)}% of target · {entries.length} {entries.length === 1 ? "entry" : "entries"}
+                      </p>
+                    </>
+                  )}
+                </GlassCard>
+              </motion.div>
+
+              <motion.div {...rise(0.24)}>
                 <GlassCard interactive className="h-full p-6">
                   <SectionHeader icon={Flame} label="Consistency" />
                   <p className="t-metric mt-6 text-5xl">{sets.length}</p>
@@ -332,11 +397,7 @@ export default function AppDashboard() {
                 </GlassCard>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.24, duration: 0.45 }}
-              >
+              <motion.div {...rise(0.28)}>
                 <GlassCard interactive className="h-full p-6">
                   <SectionHeader icon={Users} label="Friends" />
                   {friendsLoading ? (
@@ -380,11 +441,7 @@ export default function AppDashboard() {
             </div>
 
             {/* Gym */}
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.28, duration: 0.45 }}
-            >
+            <motion.div {...rise(0.32)}>
               <GlassCard className="mt-4 p-6">
                 <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div className="min-w-0">

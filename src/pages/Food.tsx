@@ -197,7 +197,7 @@ export default function Food() {
                       <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="9" />
                       <circle
                         cx="60" cy="60" r="52" fill="none"
-                        stroke={over ? "var(--accent-rose)" : "rgba(255,255,255,0.85)"}
+                        stroke={over ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.85)"}
                         strokeWidth="9" strokeLinecap="round"
                         strokeDasharray={`${(caloriePct / 100) * 2 * Math.PI * 52} ${2 * Math.PI * 52}`}
                         className="transition-all duration-700"

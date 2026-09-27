@@ -15,7 +15,9 @@ import {
   X,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { KovaLogo } from "@/components/KovaLogo";
 import { cn } from "@/lib/utils";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
@@ -126,27 +128,10 @@ function useDashboardShell(children: React.ReactNode) {
             </NavLink>
           ))}
 
-          <div className="!mt-8 border-t border-white/[0.07] pt-6">
-            {([
-              { label: "Profile", to: "/dashboard/profile", icon: UserRound },
-              { label: "Settings", to: "/dashboard/settings", icon: Settings },
-              { label: "Subscription", to: "/dashboard/upgrade", icon: CreditCard },
-            ] as const).map(({ label, to, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                onClick={closeMobile}
-                className={({ isActive }) => `nav-rail-link ${isActive ? "nav-rail-link--active" : ""}`}
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive ? <span className="nav-rail-pill" aria-hidden /> : null}
-                    <Icon className="relative size-4" strokeWidth={1.6} />
-                    <span className="relative text-sm">{label}</span>
-                  </>
-                )}
-              </NavLink>
-            ))}
+          <div className="!mt-8 border-t border-white/[0.07] px-3 pt-5">
+            <p className="text-[11px] leading-5 text-white/28">
+              Profile, Settings and Subscription live in the account menu below.
+            </p>
           </div>
         </nav>
 
@@ -309,6 +294,13 @@ function AccountMenu({
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const purchases = useQuery(api.purchases.myPurchases) ?? [];
+  const membership = useMemo(() => {
+    const active = purchases.find(
+      (purchase) => purchase.status === "paid" || purchase.status === "active",
+    );
+    return active ? `KOVA ${active.planName}` : "Free plan";
+  }, [purchases]);
 
   useEffect(() => setOpen(false), [location.pathname]);
 
@@ -392,9 +384,12 @@ function AccountMenu({
             role="menu"
             aria-label="Account menu"
          >
-            <div className="border-b border-white/[0.08] px-3 pb-2.5 pt-2">
+            <div className="border-b border-white/[0.08] px-3 pb-3 pt-2">
               <p className="truncate text-sm text-white/85">{displayName}</p>
               <p className="mt-0.5 truncate text-[11px] text-white/30">{email}</p>
+              <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.05] px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-white/55">
+                {membership}
+              </p>
             </div>
             {[
               { label: "Profile", to: "/dashboard/profile", icon: UserRound, desc: "Name, body stats, privacy" },

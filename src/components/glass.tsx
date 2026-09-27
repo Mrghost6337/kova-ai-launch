@@ -318,7 +318,7 @@ export function GlassProgress({
       <div
         className={cn(
           "h-full rounded-full transition-all duration-700 [transition-timing-function:var(--ease-app)]",
-          tone === "over" ? "bg-[var(--accent-rose)]" : "bg-white/85",
+          tone === "over" ? "bg-white/45" : "bg-white/85",
         )}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
@@ -462,7 +462,7 @@ export function SelectCard({
           className={cn(
             "flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors",
             selected
-              ? "bg-white/[0.14] text-[var(--accent-sky)]"
+              ? "bg-white/[0.16] text-white"
               : "bg-white/[0.06] text-white/55",
           )}
           aria-hidden
