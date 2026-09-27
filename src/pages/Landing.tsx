@@ -66,6 +66,15 @@ export default function Landing() {
         <FAQ />
         <FinalCTA />
         <Waitlist />
+        <footer className="mt-16 border-t border-white/[0.06] py-10">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 text-center sm:flex-row sm:justify-between sm:text-left">
+            <p className="text-xs text-white/35">© {new Date().getFullYear()} Kova AI. All rights reserved.</p>
+            <p className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-white/25">
+              <span className="size-1.5 rounded-full bg-[var(--accent-sky)] shadow-[0_0_10px_-2px_var(--accent-sky)]" />
+              Build v2.1.0
+            </p>
+          </div>
+        </footer>
       </div>
     </main>
   );
