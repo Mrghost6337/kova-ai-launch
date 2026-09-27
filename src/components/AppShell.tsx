@@ -148,14 +148,6 @@ function useDashboardShell(children: React.ReactNode) {
               </NavLink>
             ))}
           </div>
-
-          <div className="mt-6 flex items-center justify-between px-2 text-[10px] uppercase tracking-[0.18em] text-white/25">
-            <span>Build v2.1.0</span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-[var(--accent-sky)] shadow-[0_0_10px_-2px_var(--accent-sky)]" />
-              Live
-            </span>
-          </div>
         </nav>
 
         <AccountMenu
